@@ -140,21 +140,42 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	mOverlayTexture = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
 	SDL_FreeSurface(tmpSurface);
 
-#ifdef MIYOO_MINI
-    mMiyooSurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
-    if (!mMiyooSurface) {
-        DEBUG_STATUS("Unable to create background surface.");
-    }
-
+    // Load background
     tmpSurface = loadSurface("backgrounds/strand2.bmp");
     if (!tmpSurface) {
-        SDL_FreeSurface(mMiyooSurface);
         DEBUG_STATUS("Unable to load background image.");
+        return;
     }
+    
+    BufferedImage* bgImage = new BufferedImage;
 
-    SDL_Rect destRect = {0, 0, tmpSurface->w, tmpSurface->h};
-    SDL_BlitSurface(tmpSurface, NULL, mMiyooSurface, &destRect);
-#endif
+    #ifdef MIYOO_MINI
+        mMiyooSurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+        if (!mMiyooSurface) {
+            SDL_FreeSurface(tmpSurface);
+            DEBUG_STATUS("Unable to create background surface.");
+            return;
+        }
+
+        SDL_Rect destRect = {0, 0, tmpSurface->w, tmpSurface->h};
+        SDL_BlitSurface(tmpSurface, NULL, mMiyooSurface, &destRect);
+        bgImage->w = tmpSurface->w;
+        bgImage->h = tmpSurface->h;
+        bgImage->sdlImage = mBackground;
+        mImageMap["background"] = bgImage;
+    #else
+        mBackground = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
+        if (mBackground) {
+            bgImage->w = tmpSurface->w;
+            bgImage->h = tmpSurface->h;
+            bgImage->sdlImage = mBackground;
+            mImageMap["background"] = bgImage;
+        } else {
+            DEBUG_STATUS("Unable to create background texture.");
+        }
+    #endif
+
+    SDL_FreeSurface(tmpSurface);
     
 	// Create marker texture for mouse and ball
 	tmpSurface = SDL_CreateRGBSurface(0, 5, 5, 32,
@@ -164,16 +185,6 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	SDL_FillRect(tmpSurface, nullptr, SDL_MapRGB(tmpSurface->format, 0, 0, 0));
 	mMarker[1] = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
 	SDL_FreeSurface(tmpSurface);
-
-	// Load background
-	tmpSurface = loadSurface("backgrounds/strand2.bmp");
-	mBackground = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
-	BufferedImage* bgImage = new BufferedImage;
-	bgImage->w = tmpSurface->w;
-	bgImage->h = tmpSurface->h;
-	bgImage->sdlImage = mBackground;
-	SDL_FreeSurface(tmpSurface);
-	mImageMap["background"] = bgImage;
 
 	// Load ball
 	for (int i = 1; i <= 16; ++i)
