@@ -549,45 +549,59 @@ void RenderManagerSDL::drawTextImpl(const std::string& text, Vector2 position, u
 
 void RenderManagerSDL::drawImage(const std::string& filename, Vector2 position, Vector2 size)
 {
-	BufferedImage* imageBuffer = mImageMap[filename];
+    BufferedImage* imageBuffer = mImageMap[filename];
 
-	if (!imageBuffer)
-	{
-		imageBuffer = new BufferedImage;
-		SDL_Surface* tmpSurface = loadSurface(filename);
-		SDL_SetColorKey(tmpSurface, SDL_TRUE,
-				SDL_MapRGB(tmpSurface->format, 0, 0, 0));
-		imageBuffer->sdlImage = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
-		imageBuffer->w = tmpSurface->w;
-		imageBuffer->h = tmpSurface->h;
-		SDL_FreeSurface(tmpSurface);
-		mImageMap[filename] = imageBuffer;
-	}
+    if (!imageBuffer)
+    {
+        imageBuffer = new BufferedImage;
+        SDL_Surface* tmpSurface = loadSurface(filename);
+        SDL_SetColorKey(tmpSurface, SDL_TRUE,
+                SDL_MapRGB(tmpSurface->format, 0, 0, 0));
+        
+        #ifdef MIYOO_MINI
+            imageBuffer->sdlSurface = tmpSurface;
+        #else
+            imageBuffer->sdlImage = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
+            SDL_FreeSurface(tmpSurface);
+        #endif
 
-	if (size == Vector2(0,0))
-	{
-		// No scaling
-		const SDL_Rect blitRect = {
-			(short)lround(position.x - float(imageBuffer->w) / 2.0),
-			(short)lround(position.y - float(imageBuffer->h) / 2.0),
-			(short)imageBuffer->w,
-			(short)imageBuffer->h
-		};
-		SDL_RenderCopy(mRenderer, imageBuffer->sdlImage, nullptr, &blitRect);
-	}
-	else
-	{
-		// Scaling
-		const SDL_Rect blitRect = {
-			(short)lround(position.x - float(size.x) / 2.0),
-			(short)lround(position.y - float(size.y) / 2.0),
-			(short)size.x,
-			(short)size.y
-		};
-		SDL_RenderCopy(mRenderer, imageBuffer->sdlImage, nullptr, &blitRect);
-	}
+        imageBuffer->w = tmpSurface->w;
+        imageBuffer->h = tmpSurface->h;
+        mImageMap[filename] = imageBuffer;
+    }
 
+    SDL_Rect blitRect;
+    if (size == Vector2(0,0))
+    {
+        // No scaling
+        blitRect = {
+            (short)lround(position.x - float(imageBuffer->w) / 2.0),
+            (short)lround(position.y - float(imageBuffer->h) / 2.0),
+            (short)imageBuffer->w,
+            (short)imageBuffer->h
+        };
+    }
+    else
+    {
+        // Scaling
+        blitRect = {
+            (short)lround(position.x - float(size.x) / 2.0),
+            (short)lround(position.y - float(size.y) / 2.0),
+            (short)size.x,
+            (short)size.y
+        };
+    }
+
+    #ifdef MIYOO_MINI
+        if (mMiyooSurface && imageBuffer->sdlSurface)
+        {
+            SDL_BlitSurface(imageBuffer->sdlSurface, nullptr, mMiyooSurface, &blitRect);
+        }
+    #else
+        SDL_RenderCopy(mRenderer, imageBuffer->sdlImage, nullptr, &blitRect);
+    #endif
 }
+
 
 void RenderManagerSDL::drawOverlay(float opacity, Vector2 pos1, Vector2 pos2, Color col)
 {
