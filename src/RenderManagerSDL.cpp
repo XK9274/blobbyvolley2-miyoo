@@ -126,7 +126,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 #ifdef MIYOO_MINI
 	mRenderTarget = SDL_CreateTexture(mRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, xResolution, yResolution);
 #else
-    mRenderTarget = SDL_CreateTexture(mRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, xResolution, yResolution);
+	mRenderTarget = SDL_CreateTexture(mRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, xResolution, yResolution);
 #endif
 
 	// Load all textures and surfaces to render the game
@@ -140,51 +140,51 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	mOverlayTexture = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
 	SDL_FreeSurface(tmpSurface);
 
-    // Load background
-    tmpSurface = loadSurface("backgrounds/strand2.bmp");
-    if (!tmpSurface) {
-        DEBUG_STATUS("Unable to load background image.");
-        return;
-    }
-    
-    BufferedImage* bgImage = new BufferedImage;
+	// Load background
+	tmpSurface = loadSurface("backgrounds/strand2.bmp");
+	if (!tmpSurface) {
+		DEBUG_STATUS("Unable to load background image.");
+		return;
+	}
+	
+	BufferedImage* bgImage = new BufferedImage;
 
 #ifdef MIYOO_MINI
-    mMiyooSurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
-    if (!mMiyooSurface) {
-        DEBUG_STATUS("Unable to create background surface.");
-        delete bgImage;
-        return;
-    }
-    
-    mBackgroundSurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
-    if (!mBackgroundSurface) {
-        DEBUG_STATUS("Unable to create background surface.");
-        delete bgImage;
-        return;
-    }
+	mMiyooSurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+	if (!mMiyooSurface) {
+		DEBUG_STATUS("Unable to create background surface.");
+		delete bgImage;
+		return;
+	}
+	
+	mBackgroundSurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+	if (!mBackgroundSurface) {
+		DEBUG_STATUS("Unable to create background surface.");
+		delete bgImage;
+		return;
+	}
 
-    SDL_Rect destRect = {0, 0, tmpSurface->w, tmpSurface->h};
-    SDL_BlitSurface(tmpSurface, NULL, mBackgroundSurface, &destRect);
-    bgImage->w = mBackgroundSurface->w;
-    bgImage->h = mBackgroundSurface->h;
-    bgImage->sdlSurface = mBackgroundSurface; 
-    mImageMap["background"] = bgImage;
-    SDL_BlitSurface(mBackgroundSurface, NULL, mMiyooSurface, NULL);
+	SDL_Rect destRect = {0, 0, tmpSurface->w, tmpSurface->h};
+	SDL_BlitSurface(tmpSurface, NULL, mBackgroundSurface, &destRect);
+	bgImage->w = mBackgroundSurface->w;
+	bgImage->h = mBackgroundSurface->h;
+	bgImage->sdlSurface = mBackgroundSurface; 
+	mImageMap["background"] = bgImage;
+	SDL_BlitSurface(mBackgroundSurface, NULL, mMiyooSurface, NULL);
 #else
-    mBackground = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
-    if (mBackground) {
-        bgImage->w = tmpSurface->w;
-        bgImage->h = tmpSurface->h;
-        bgImage->sdlImage = mBackground;
-        mImageMap["background"] = bgImage;
-    } else {
-        DEBUG_STATUS("Unable to create background texture.");
-        delete bgImage;
-    }
+	mBackground = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
+	if (mBackground) {
+		bgImage->w = tmpSurface->w;
+		bgImage->h = tmpSurface->h;
+		bgImage->sdlImage = mBackground;
+		mImageMap["background"] = bgImage;
+	} else {
+		DEBUG_STATUS("Unable to create background texture.");
+		delete bgImage;
+	}
 #endif
 
-    SDL_FreeSurface(tmpSurface); // Free the temporary surface as it's no longer needed
+	SDL_FreeSurface(tmpSurface); // Free the temporary surface as it's no longer needed
 
 	// Create marker texture for mouse and ball
 	tmpSurface = SDL_CreateRGBSurface(0, 5, 5, 32,
@@ -309,18 +309,33 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	}
 
 	// Load font
-	for (int i = 0; i <= 58; ++i)
-	{
+	for (int i = 0; i <= 58; ++i) {
 		char filename[64];
 		sprintf(filename, "gfx/font%02d.bmp", i);
 		SDL_Surface* tempFont = loadSurface(filename);
 
 		SDL_SetColorKey(tempFont, SDL_TRUE, SDL_MapRGB(tempFont->format, 0, 0, 0));
-		mFont.push_back(SDL_CreateTextureFromSurface(mRenderer, tempFont));
+
+#ifdef MIYOO_MINI
+		mFontSurfaces.push_back(tempFont);
+
+		SDL_Surface* tempFontHighlighted = highlightSurface(tempFont, 60);
+		if (tempFontHighlighted != nullptr) {
+			mHighlightFontSurfaces.push_back(tempFontHighlighted);
+		} else {
+			DEBUG_STATUS("HELP");
+		}
+#else
+		SDL_Texture* fontTexture = SDL_CreateTextureFromSurface(mRenderer, tempFont);
+		mFont.push_back(fontTexture); 
+
 		SDL_Surface* tempFont2 = highlightSurface(tempFont, 60);
-		mHighlightFont.push_back(SDL_CreateTextureFromSurface(mRenderer, tempFont2));
+		SDL_Texture* fontTextureHighlighted = SDL_CreateTextureFromSurface(mRenderer, tempFont2);
+		mHighlightFont.push_back(fontTextureHighlighted);
+
 		SDL_FreeSurface(tempFont);
 		SDL_FreeSurface(tempFont2);
+#endif
 	}
 
 	// Load blood surface
@@ -368,6 +383,22 @@ SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
 RenderManagerSDL::~RenderManagerSDL()
 {
+	
+#ifdef MIYOO_MINI
+	if (mMiyooSurface) {
+		SDL_FreeSurface(mMiyooSurface);
+	}
+	if (mBackgroundSurface) {
+		SDL_FreeSurface(mBackgroundSurface);
+	}
+	for (auto& surface : mFontSurfaces) {
+		SDL_FreeSurface(surface);
+	}
+	for (auto& surface : mHighlightFontSurfaces) {
+		SDL_FreeSurface(surface);
+	}
+#endif
+
 	SDL_DestroyTexture(mOverlayTexture);
 	SDL_DestroyTexture(mRenderTarget);
 
@@ -512,6 +543,27 @@ void RenderManagerSDL::drawTextImpl(const std::string& text, Vector2 position, u
 		if (flags & TF_OBFUSCATE)
 			index = FONT_INDEX_ASTERISK;
 
+#ifdef MIYOO_MINI
+		SDL_Rect charRect;
+		charRect.x = lround(position.x) + length;
+		charRect.y = lround(position.y);
+		charRect.w = FONT_WIDTH_SMALL;
+		charRect.h = FONT_WIDTH_SMALL;
+
+		SDL_Surface* fontSurface = nullptr;
+		if (flags & TF_SMALL_FONT)
+		{
+			fontSurface = (flags & TF_HIGHLIGHT) ? mHighlightFontSurfaces[index] : mFontSurfaces[index];
+		}
+		else
+		{
+			fontSurface = (flags & TF_HIGHLIGHT) ? mHighlightFontSurfaces[index] : mFontSurfaces[index];
+		}
+
+		if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
+		SDL_BlitSurface(fontSurface, nullptr, mMiyooSurface, &charRect);
+		if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
+#else
 		SDL_Rect charRect;
 		charRect.x = lround(position.x) + length;
 		charRect.y = lround(position.y);
@@ -520,86 +572,71 @@ void RenderManagerSDL::drawTextImpl(const std::string& text, Vector2 position, u
 		{
 			charRect.w = FONT_WIDTH_SMALL;
 			charRect.h = FONT_WIDTH_SMALL;
-			if (flags & TF_HIGHLIGHT)
-			{
-				SDL_RenderCopy(mRenderer, mHighlightFont[index], nullptr, &charRect);
-			}
-			else
-			{
-				SDL_RenderCopy(mRenderer,mFont[index], nullptr, &charRect);
-			}
+			SDL_RenderCopy(mRenderer, (flags & TF_HIGHLIGHT) ? mHighlightFont[index] : mFont[index], nullptr, &charRect);
 		}
 		else
 		{
-			if (flags & TF_HIGHLIGHT)
-			{
-				SDL_QueryTexture(mHighlightFont[index], nullptr, nullptr, &charRect.w, &charRect.h);
-				SDL_RenderCopy(mRenderer, mHighlightFont[index], nullptr, &charRect);
-			}
-			else
-			{
-				SDL_QueryTexture(mHighlightFont[index], nullptr, nullptr, &charRect.w, &charRect.h);
-				SDL_RenderCopy(mRenderer,mFont[index], nullptr, &charRect);
-			}
+			SDL_QueryTexture((flags & TF_HIGHLIGHT) ? mHighlightFont[index] : mFont[index], nullptr, nullptr, &charRect.w, &charRect.h);
+			SDL_RenderCopy(mRenderer, (flags & TF_HIGHLIGHT) ? mHighlightFont[index] : mFont[index], nullptr, &charRect);
 		}
-
+#endif
 		length += FontSize;
 	}
 }
 
 void RenderManagerSDL::drawImage(const std::string& filename, Vector2 position, Vector2 size)
 {
-    BufferedImage* imageBuffer = mImageMap[filename];
+	BufferedImage* imageBuffer = mImageMap[filename];
 
-    if (!imageBuffer)
-    {
-        imageBuffer = new BufferedImage;
-        SDL_Surface* tmpSurface = loadSurface(filename);
-        SDL_SetColorKey(tmpSurface, SDL_TRUE,
-                SDL_MapRGB(tmpSurface->format, 0, 0, 0));
-        
-        #ifdef MIYOO_MINI
-            imageBuffer->sdlSurface = tmpSurface;
-        #else
-            imageBuffer->sdlImage = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
-            SDL_FreeSurface(tmpSurface);
-        #endif
+	if (!imageBuffer)
+	{
+		imageBuffer = new BufferedImage;
+		SDL_Surface* tmpSurface = loadSurface(filename);
+		SDL_SetColorKey(tmpSurface, SDL_TRUE,
+				SDL_MapRGB(tmpSurface->format, 0, 0, 0));
+		
+		#ifdef MIYOO_MINI
+			imageBuffer->sdlSurface = tmpSurface;
+		#else
+			imageBuffer->sdlImage = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
+			SDL_FreeSurface(tmpSurface);
+		#endif
 
-        imageBuffer->w = tmpSurface->w;
-        imageBuffer->h = tmpSurface->h;
-        mImageMap[filename] = imageBuffer;
-    }
+		imageBuffer->w = tmpSurface->w;
+		imageBuffer->h = tmpSurface->h;
+		mImageMap[filename] = imageBuffer;
+	}
 
-    SDL_Rect blitRect;
-    if (size == Vector2(0,0))
-    {
-        // No scaling
-        blitRect = {
-            (short)lround(position.x - float(imageBuffer->w) / 2.0),
-            (short)lround(position.y - float(imageBuffer->h) / 2.0),
-            (short)imageBuffer->w,
-            (short)imageBuffer->h
-        };
-    }
-    else
-    {
-        // Scaling
-        blitRect = {
-            (short)lround(position.x - float(size.x) / 2.0),
-            (short)lround(position.y - float(size.y) / 2.0),
-            (short)size.x,
-            (short)size.y
-        };
-    }
+	SDL_Rect blitRect;
+	if (size == Vector2(0,0))
+	{
+		// No scaling
+		blitRect = {
+			(short)lround(position.x - float(imageBuffer->w) / 2.0),
+			(short)lround(position.y - float(imageBuffer->h) / 2.0),
+			(short)imageBuffer->w,
+			(short)imageBuffer->h
+		};
+	}
+	else
+	{
+		// Scaling
+		blitRect = {
+			(short)lround(position.x - float(size.x) / 2.0),
+			(short)lround(position.y - float(size.y) / 2.0),
+			(short)size.x,
+			(short)size.y
+		};
+	}
 
-    #ifdef MIYOO_MINI
-        if (mMiyooSurface && imageBuffer->sdlSurface)
-        {
-            SDL_BlitSurface(imageBuffer->sdlSurface, nullptr, mMiyooSurface, &blitRect);
-        }
-    #else
-        SDL_RenderCopy(mRenderer, imageBuffer->sdlImage, nullptr, &blitRect);
-    #endif
+	#ifdef MIYOO_MINI
+		if (mMiyooSurface && imageBuffer->sdlSurface)
+		{
+			SDL_BlitSurface(imageBuffer->sdlSurface, nullptr, mMiyooSurface, &blitRect);
+		}
+	#else
+		SDL_RenderCopy(mRenderer, imageBuffer->sdlImage, nullptr, &blitRect);
+	#endif
 }
 
 
@@ -664,10 +701,10 @@ void RenderManagerSDL::drawParticle(const Vector2& pos, int player)
 void RenderManagerSDL::refresh()
 {
 #ifdef MIYOO_MINI
-    SDL_RenderClear(mRenderer);
-    SDL_UpdateTexture(mRenderTarget, NULL, mMiyooSurface->pixels, mMiyooSurface->pitch);
-    SDL_RenderCopy(mRenderer, mRenderTarget, NULL, NULL);
-    SDL_RenderPresent(mRenderer);
+	SDL_RenderClear(mRenderer);
+	SDL_UpdateTexture(mRenderTarget, NULL, mMiyooSurface->pixels, mMiyooSurface->pitch);
+	SDL_RenderCopy(mRenderer, mRenderTarget, NULL, NULL);
+	SDL_RenderPresent(mRenderer);
 #else
 	SDL_SetRenderTarget(mRenderer, nullptr);
 
@@ -695,10 +732,11 @@ void RenderManagerSDL::refresh()
 void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 {
 #ifdef MIYOO_MINI
-    SDL_BlitSurface(mBackgroundSurface, NULL, mMiyooSurface, NULL);
+	SDL_BlitSurface(mBackgroundSurface, NULL, mMiyooSurface, NULL);
 #else
 	SDL_RenderCopy(mRenderer, mBackground, nullptr, nullptr);
 #endif
+
 	SDL_Rect position;
 
 	// Ball marker
