@@ -143,13 +143,13 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 #ifdef MIYOO_MINI
     mMiyooSurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
     if (!mMiyooSurface) {
-        throw std::runtime_error("Unable to create background surface.");
+        DEBUG_STATUS("Unable to create background surface.");
     }
 
     tmpSurface = loadSurface("backgrounds/strand2.bmp");
     if (!tmpSurface) {
         SDL_FreeSurface(mMiyooSurface);
-        throw std::runtime_error("Unable to load background image.");
+        DEBUG_STATUS("Unable to load background image.");
     }
 
     SDL_Rect destRect = {0, 0, tmpSurface->w, tmpSurface->h};
