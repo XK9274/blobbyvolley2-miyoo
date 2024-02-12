@@ -195,18 +195,21 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	mMarker[1] = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
 	SDL_FreeSurface(tmpSurface);
 
-	// Load ball
+    // Load ball
 	for (int i = 1; i <= 16; ++i)
-	{
-		char filename[64];
-		sprintf(filename, "gfx/ball%02d.bmp", i);
-		tmpSurface = loadSurface(filename);
-		SDL_SetColorKey(tmpSurface, SDL_TRUE,
-				SDL_MapRGB(tmpSurface->format, 0, 0, 0));
+		{
+    	char filename[64];
+    	sprintf(filename, "gfx/ball%02d.bmp", i);
+    	tmpSurface = loadSurface(filename);
+    	SDL_SetColorKey(tmpSurface, SDL_TRUE, SDL_MapRGB(tmpSurface->format, 0, 0, 0));
 
-		SDL_Texture *ballTexture = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
-		SDL_FreeSurface(tmpSurface);
-		mBall.push_back(ballTexture);
+#ifdef MIYOO_MINI
+    	mBallSurfaces.push_back(tmpSurface);
+#else
+    	SDL_Texture *ballTexture = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
+    	SDL_FreeSurface(tmpSurface);
+    	mBall.push_back(ballTexture);
+#endif
 	}
 
 	// Load ball shadow
@@ -425,11 +428,13 @@ RenderManagerSDL::~RenderManagerSDL()
 	SDL_DestroyTexture(mLeftBlobBlood.mSDLsf);
 	SDL_DestroyTexture(mRightBlobBlood.mSDLsf);
 
+#ifndef MIYOO_MINI
 	for (unsigned int i = 0; i < mFont.size(); ++i)
 	{
 		SDL_DestroyTexture(mFont[i]);
 		SDL_DestroyTexture(mHighlightFont[i]);
 	}
+#endif
 
 	for(const auto& image : mImageMap) {
 		SDL_DestroyTexture(image.second->sdlImage);
@@ -783,7 +788,15 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 	// Drawing the Ball
 	position = ballRect(gameState.getBallPosition());
 	int animationState = int(gameState.getBallRotation() / M_PI / 2 * 16) % 16;
+
+#ifdef MIYOO_MINI
+	if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
+	SDL_Rect srcRect = {0, 0, mBallSurfaces[animationState]->w, mBallSurfaces[animationState]->h};
+	SDL_BlitSurface(mBallSurfaces[animationState], &srcRect, mMiyooSurface, &position);
+	if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
+#else
 	SDL_RenderCopy(mRenderer, mBall[animationState], nullptr, &position);
+#endif
 
 	// update blob colors
 	int leftFrame = int(gameState.getBlobState(LEFT_PLAYER)) % 5;

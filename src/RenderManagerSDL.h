@@ -71,7 +71,14 @@ class RenderManagerSDL : public RenderManager
 		SDL_Texture* mMarker[2];
 
 #ifdef MIYOO_MINI
-        SDL_Surface* mMiyooSurface;
+		SDL_Surface* mMiyooSurface;
+		SDL_Surface* mBackgroundSurface;
+		std::vector<SDL_Surface*> mFontSurfaces;
+		std::vector<SDL_Surface*> mHighlightFontSurfaces;
+		std::vector<SDL_Surface*> mBallSurfaces; 
+#else
+		std::vector<SDL_Texture*> mFont;
+		std::vector<SDL_Texture*> mHighlightFont;
 #endif        
 
 		std::vector<SDL_Texture*> mBall;
@@ -86,9 +93,6 @@ class RenderManagerSDL : public RenderManager
 		std::vector<DynamicColoredTexture> mRightBlob;
 		std::vector<DynamicColoredTexture> mRightBlobShadow;
 		DynamicColoredTexture mRightBlobBlood;
-
-		std::vector<SDL_Texture*> mFont;
-		std::vector<SDL_Texture*> mHighlightFont;
 
 		SDL_Texture* mOverlayTexture = nullptr;
 
