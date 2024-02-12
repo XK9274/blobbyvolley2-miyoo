@@ -70,7 +70,12 @@ class RenderManagerSDL : public RenderManager
 		SDL_Texture* mBallShadow;
 		SDL_Texture* mMarker[2];
 
+#ifdef MIYOO_MINI
+        SDL_Surface* mMiyooSurface;
+#endif        
+
 		std::vector<SDL_Texture*> mBall;
+        
 		std::vector<SDL_Surface*> mStandardBlob;
 		std::vector<SDL_Surface*> mStandardBlobShadow;
 		SDL_Surface* mStandardBlobBlood;
@@ -100,6 +105,7 @@ class RenderManagerSDL : public RenderManager
 		// colors a surface
 		// the returned SDL_Surface* is already converted into DisplayFormat
 		SDL_Surface* colorSurface(SDL_Surface *surface, Color color);
+
 
 		void drawTextImpl(const std::string& text, Vector2 position, unsigned int flags);
 		void colorizeBlobs(int player, int frame);

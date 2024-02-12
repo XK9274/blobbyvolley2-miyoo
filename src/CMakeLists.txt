@@ -86,6 +86,7 @@ find_package(Boost REQUIRED)
 find_package(OpenGL)
 add_subdirectory(raknet)
 add_subdirectory(blobnet)
+add_definitions(-DMIYOO_MINI)
 
 if (SWITCH)
 	find_library(NX nx)

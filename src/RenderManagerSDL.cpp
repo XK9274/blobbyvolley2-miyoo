@@ -123,7 +123,11 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	SDL_ShowCursor(0);
 
 	// Create rendertarget to make window resizeable
-	mRenderTarget = SDL_CreateTexture(mRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, xResolution, yResolution);
+#ifdef MIYOO_MINI
+	mRenderTarget = SDL_CreateTexture(mRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, xResolution, yResolution);
+#else
+    mRenderTarget = SDL_CreateTexture(mRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, xResolution, yResolution);
+#endif
 
 	// Load all textures and surfaces to render the game
 	SDL_Surface* tmpSurface;
@@ -136,6 +140,22 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	mOverlayTexture = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
 	SDL_FreeSurface(tmpSurface);
 
+#ifdef MIYOO_MINI
+    mMiyooSurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+    if (!mMiyooSurface) {
+        throw std::runtime_error("Unable to create background surface.");
+    }
+
+    tmpSurface = loadSurface("backgrounds/strand2.bmp");
+    if (!tmpSurface) {
+        SDL_FreeSurface(mMiyooSurface);
+        throw std::runtime_error("Unable to load background image.");
+    }
+
+    SDL_Rect destRect = {0, 0, tmpSurface->w, tmpSurface->h};
+    SDL_BlitSurface(tmpSurface, NULL, mMiyooSurface, &destRect);
+#endif
+    
 	// Create marker texture for mouse and ball
 	tmpSurface = SDL_CreateRGBSurface(0, 5, 5, 32,
 			0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
@@ -609,6 +629,12 @@ void RenderManagerSDL::drawParticle(const Vector2& pos, int player)
 
 void RenderManagerSDL::refresh()
 {
+#ifdef MIYOO_MINI
+    SDL_RenderClear(mRenderer);
+    SDL_UpdateTexture(mRenderTarget, NULL, mMiyooSurface->pixels, mMiyooSurface->pitch);
+    SDL_RenderCopy(mRenderer, mRenderTarget, NULL, NULL);
+    SDL_RenderPresent(mRenderer);
+#else
 	SDL_SetRenderTarget(mRenderer, nullptr);
 
 	// We have a resizeable window
@@ -629,6 +655,7 @@ void RenderManagerSDL::refresh()
 	SDL_RenderCopy(mRenderer, mRenderTarget, nullptr, nullptr);
 	SDL_RenderPresent(mRenderer);
 	SDL_SetRenderTarget(mRenderer, mRenderTarget);
+#endif
 }
 
 void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
