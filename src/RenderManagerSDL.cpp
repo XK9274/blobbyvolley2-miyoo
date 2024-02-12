@@ -149,34 +149,43 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
     
     BufferedImage* bgImage = new BufferedImage;
 
-    #ifdef MIYOO_MINI
-        mMiyooSurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
-        if (!mMiyooSurface) {
-            SDL_FreeSurface(tmpSurface);
-            DEBUG_STATUS("Unable to create background surface.");
-            return;
-        }
+#ifdef MIYOO_MINI
+    mMiyooSurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+    if (!mMiyooSurface) {
+        DEBUG_STATUS("Unable to create background surface.");
+        delete bgImage;
+        return;
+    }
+    
+    mBackgroundSurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+    if (!mBackgroundSurface) {
+        DEBUG_STATUS("Unable to create background surface.");
+        delete bgImage;
+        return;
+    }
 
-        SDL_Rect destRect = {0, 0, tmpSurface->w, tmpSurface->h};
-        SDL_BlitSurface(tmpSurface, NULL, mMiyooSurface, &destRect);
+    SDL_Rect destRect = {0, 0, tmpSurface->w, tmpSurface->h};
+    SDL_BlitSurface(tmpSurface, NULL, mBackgroundSurface, &destRect);
+    bgImage->w = mBackgroundSurface->w;
+    bgImage->h = mBackgroundSurface->h;
+    bgImage->sdlSurface = mBackgroundSurface; 
+    mImageMap["background"] = bgImage;
+    SDL_BlitSurface(mBackgroundSurface, NULL, mMiyooSurface, NULL);
+#else
+    mBackground = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
+    if (mBackground) {
         bgImage->w = tmpSurface->w;
         bgImage->h = tmpSurface->h;
         bgImage->sdlImage = mBackground;
         mImageMap["background"] = bgImage;
-    #else
-        mBackground = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
-        if (mBackground) {
-            bgImage->w = tmpSurface->w;
-            bgImage->h = tmpSurface->h;
-            bgImage->sdlImage = mBackground;
-            mImageMap["background"] = bgImage;
-        } else {
-            DEBUG_STATUS("Unable to create background texture.");
-        }
-    #endif
+    } else {
+        DEBUG_STATUS("Unable to create background texture.");
+        delete bgImage;
+    }
+#endif
 
-    SDL_FreeSurface(tmpSurface);
-    
+    SDL_FreeSurface(tmpSurface); // Free the temporary surface as it's no longer needed
+
 	// Create marker texture for mouse and ball
 	tmpSurface = SDL_CreateRGBSurface(0, 5, 5, 32,
 			0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
@@ -671,8 +680,11 @@ void RenderManagerSDL::refresh()
 
 void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 {
+#ifdef MIYOO_MINI
+    SDL_BlitSurface(mBackgroundSurface, NULL, mMiyooSurface, NULL);
+#else
 	SDL_RenderCopy(mRenderer, mBackground, nullptr, nullptr);
-
+#endif
 	SDL_Rect position;
 
 	// Ball marker
