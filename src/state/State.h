@@ -97,6 +97,7 @@ class CreditsState : public State
 public:
 	CreditsState();
 	void step_impl() override;
+    unsigned int getFontFlags();
 	const char* getStateName() const override;
 private:
 	float mYPosition;
