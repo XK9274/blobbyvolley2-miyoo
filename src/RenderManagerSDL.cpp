@@ -313,8 +313,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
         mRightBlobShadow.emplace_back(
                         rightBlobShadowTex,
                         Color(255, 255, 255));
-#endif
-
+                        
 		// Prepare blobby textures
 		SDL_Texture* leftBlobTex = SDL_CreateTexture(mRenderer,
 				SDL_PIXELFORMAT_ABGR8888,
@@ -358,7 +357,9 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 				rightBlobShadowTex,
 				Color(255, 255, 255));
 		SDL_UpdateTexture(rightBlobShadowTex, nullptr, formattedBlobShadowImage->pixels, formattedBlobShadowImage->pitch);
+#endif
 	}
+
 
 	// Load font
 	for (int i = 0; i <= 58; ++i) {
@@ -387,7 +388,8 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 		SDL_FreeSurface(tempFont2);
 #endif
 	}
-
+#ifdef MIYOO_MINI
+#else
 	// Load blood surface
 	SDL_Surface* blobStandardBlood = loadSurface("gfx/blood.bmp");
 	SDL_Surface* formattedBlobStandardBlood = SDL_ConvertSurfaceFormat(blobStandardBlood, SDL_PIXELFORMAT_ABGR8888, 0);
@@ -427,6 +429,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 			rightBlobBlood,
 			Color(255, 0, 0));
 	SDL_UpdateTexture(rightBlobBlood, nullptr, formattedBlobStandardBlood->pixels, formattedBlobStandardBlood->pitch);
+#endif
 
 SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 }
@@ -447,13 +450,12 @@ RenderManagerSDL::~RenderManagerSDL()
 	for (auto& surface : mHighlightFontSurfaces) {
 		SDL_FreeSurface(surface);
 	}
-		
+	for (auto& surface : mBlobShadowSurfaces) {
+		SDL_FreeSurface(surface);
+	}	
 	for(const auto& image : mImageMap) {
 		SDL_FreeSurface(image.second->sdlSurface);
 		delete image.second;
-	}
-	for (auto& surface : mBlobShadowSurfaces) {
-		SDL_FreeSurface(surface);
 	}
 		
 #else
@@ -540,10 +542,13 @@ void RenderManagerSDL::setBlobColor(int player, Color color)
 {
 	if (color != mBlobColor[player]) {
 		mBlobColor[player] = color;
+#ifdef MIYOO_MINI
+        return;
+#endif
 	} else {
 		return;
 	}
-
+    
 	DynamicColoredTexture* handledBlobBlood;
 
 	if (player == LEFT_PLAYER)
@@ -555,40 +560,41 @@ void RenderManagerSDL::setBlobColor(int player, Color color)
 		handledBlobBlood = &mRightBlobBlood;
 	}
 
-	SDL_Surface* tempSurface = colorSurface(mStandardBlobBlood, mBlobColor[player]);
+    SDL_Surface* tempSurface = colorSurface(mStandardBlobBlood, mBlobColor[player]);
 	SDL_UpdateTexture(handledBlobBlood->mSDLsf, nullptr, tempSurface->pixels, tempSurface->pitch);
 	SDL_FreeSurface(tempSurface);
 }
 
-
 void RenderManagerSDL::colorizeBlobs(int player, int frame)
 {
+#ifndef MIYOO_MINI
 	std::vector<DynamicColoredTexture> *handledBlob = nullptr;
 	std::vector<DynamicColoredTexture> *handledBlobShadow = nullptr;
 
-	// if (player == LEFT_PLAYER)
-	// {
-		// handledBlob = &mLeftBlob;
-		// handledBlobShadow = &mLeftBlobShadow;
-	// }
-	// if (player == RIGHT_PLAYER)
-	// {
-		// handledBlob = &mRightBlob;
-		// handledBlobShadow = &mRightBlobShadow;
-	// }
+	if (player == LEFT_PLAYER)
+	{
+		handledBlob = &mLeftBlob;
+		handledBlobShadow = &mLeftBlobShadow;
+	}
+	if (player == RIGHT_PLAYER)
+	{
+		handledBlob = &mRightBlob;
+		handledBlobShadow = &mRightBlobShadow;
+	}
 
-	// if( (*handledBlob)[frame].mColor != mBlobColor[player])
-	// {
-		// SDL_Surface* tempSurface = colorSurface(mStandardBlob[frame], mBlobColor[player]);
-		// SDL_UpdateTexture((*handledBlob)[frame].mSDLsf, nullptr, tempSurface->pixels, tempSurface->pitch);
-		// SDL_FreeSurface(tempSurface);
+	if( (*handledBlob)[frame].mColor != mBlobColor[player])
+	{
+		SDL_Surface* tempSurface = colorSurface(mStandardBlob[frame], mBlobColor[player]);
+		SDL_UpdateTexture((*handledBlob)[frame].mSDLsf, nullptr, tempSurface->pixels, tempSurface->pitch);
+		SDL_FreeSurface(tempSurface);
 
-		// SDL_Surface* tempSurface2 = colorSurface(mStandardBlobShadow[frame], mBlobColor[player]);
-		// SDL_UpdateTexture((*handledBlobShadow)[frame].mSDLsf, nullptr, tempSurface2->pixels, tempSurface2->pitch);
-		// SDL_FreeSurface(tempSurface2);
+		SDL_Surface* tempSurface2 = colorSurface(mStandardBlobShadow[frame], mBlobColor[player]);
+		SDL_UpdateTexture((*handledBlobShadow)[frame].mSDLsf, nullptr, tempSurface2->pixels, tempSurface2->pitch);
+		SDL_FreeSurface(tempSurface2);
 
-		// (*handledBlob)[frame].mColor = mBlobColor[player];
-	// }
+		(*handledBlob)[frame].mColor = mBlobColor[player];
+	}
+#endif
 }
 
 
@@ -617,13 +623,13 @@ void RenderManagerSDL::drawTextImpl(const std::string& text, Vector2 position, u
         
         bool isHighlight = flags & TF_HIGHLIGHT;
         
-        #ifdef MIYOO_MINI
+#ifdef MIYOO_MINI
         SDL_Surface* fontSurface = nullptr;
         fontSurface = isHighlight ? mHighlightFontSurfaces[index] : mFontSurfaces[index];
-        #else
+#else
         SDL_Texture* fontTexture = nullptr;
         fontTexture = isHighlight ? mHighlightFont[index] : mFont[index];
-        #endif
+#endif
 
         SDL_Rect charRect = {
             lround(position.x) + length,
@@ -632,14 +638,14 @@ void RenderManagerSDL::drawTextImpl(const std::string& text, Vector2 position, u
             FontSize
         };
 
-        #ifdef MIYOO_MINI
+#ifdef MIYOO_MINI
         if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
         SDL_BlitSurface(fontSurface, nullptr, mMiyooSurface, &charRect);
         if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
-        #else
+#else
         SDL_QueryTexture(fontTexture, nullptr, nullptr, &charRect.w, &charRect.h);
         SDL_RenderCopy(mRenderer, fontTexture, nullptr, &charRect);
-        #endif
+#endif
 
         length += FontSize;
     }
@@ -721,26 +727,26 @@ void RenderManagerSDL::drawImage(const std::string& filename, Vector2 position, 
 
 void RenderManagerSDL::drawOverlay(float opacity, Vector2 pos1, Vector2 pos2, Color col)
 {
-		SDL_Rect ovRect;
-		ovRect.x = static_cast<int>(lround(pos1.x));
-		ovRect.y = static_cast<int>(lround(pos1.y));
-		ovRect.w = static_cast<int>(lround(pos2.x - pos1.x));
-		ovRect.h = static_cast<int>(lround(pos2.y - pos1.y));
+	SDL_Rect ovRect;
+	ovRect.x = static_cast<int>(lround(pos1.x));
+	ovRect.y = static_cast<int>(lround(pos1.y));
+	ovRect.w = static_cast<int>(lround(pos2.x - pos1.x));
+	ovRect.h = static_cast<int>(lround(pos2.y - pos1.y));
 
 #ifdef MIYOO_MINI
-		if (mOverlaySurface != nullptr) {
-				SDL_Surface* resizedOverlay = SDL_CreateRGBSurface(0, ovRect.w, ovRect.h, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
-				if (resizedOverlay) {
-						SDL_FillRect(resizedOverlay, NULL, SDL_MapRGBA(resizedOverlay->format, col.r, col.g, col.b, static_cast<Uint8>(lround(opacity * 255))));
-						SDL_SetSurfaceBlendMode(resizedOverlay, SDL_BLENDMODE_BLEND);
-						SDL_BlitSurface(resizedOverlay, NULL, mMiyooSurface, &ovRect);
-						SDL_FreeSurface(resizedOverlay);
-				}
+	if (mOverlaySurface != nullptr) {
+		SDL_Surface* resizedOverlay = SDL_CreateRGBSurface(0, ovRect.w, ovRect.h, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+		if (resizedOverlay) {
+			SDL_FillRect(resizedOverlay, NULL, SDL_MapRGBA(resizedOverlay->format, col.r, col.g, col.b, static_cast<Uint8>(lround(opacity * 255))));
+			SDL_SetSurfaceBlendMode(resizedOverlay, SDL_BLENDMODE_BLEND);
+			SDL_BlitSurface(resizedOverlay, NULL, mMiyooSurface, &ovRect);
+			SDL_FreeSurface(resizedOverlay);
 		}
+	}
 #else
-		SDL_SetTextureAlphaMod(mOverlayTexture, static_cast<Uint8>(lround(opacity * 255)));
-		SDL_SetTextureColorMod(mOverlayTexture, col.r, col.g, col.b);
-		SDL_RenderCopy(mRenderer, mOverlayTexture, nullptr, &ovRect);
+	SDL_SetTextureAlphaMod(mOverlayTexture, static_cast<Uint8>(lround(opacity * 255)));
+	SDL_SetTextureColorMod(mOverlayTexture, col.r, col.g, col.b);
+	SDL_RenderCopy(mRenderer, mOverlayTexture, nullptr, &ovRect);
 #endif
 }
 
@@ -755,6 +761,7 @@ void RenderManagerSDL::drawBlob(const Vector2& pos, const Color& col)
 	setBlobColor(toDraw, col);
 	/// \todo this recolores the current frame (0)
 	/// + shadows; that's not exactly what we want
+#ifndef MIYOO_MINI
 	colorizeBlobs(toDraw, 0);
 
 
@@ -774,6 +781,7 @@ void RenderManagerSDL::drawBlob(const Vector2& pos, const Color& col)
 		SDL_RenderCopy(mRenderer, mLeftBlob[0].mSDLsf, nullptr, &position);
 		toDraw = 1;
 	}
+#endif
 }
 
 void RenderManagerSDL::drawParticle(const Vector2& pos, int player)
@@ -786,8 +794,9 @@ void RenderManagerSDL::drawParticle(const Vector2& pos, int player)
 	};
 
 	DynamicColoredTexture blood = player == LEFT_PLAYER ? mLeftBlobBlood : mRightBlobBlood;
-
-	SDL_RenderCopy(mRenderer, blood.mSDLsf, nullptr, &blitRect);
+#ifndef MIYOO_MINI
+        SDL_RenderCopy(mRenderer, blood.mSDLsf, nullptr, &blitRect);
+#endif
 }
 
 void RenderManagerSDL::refresh()
@@ -882,6 +891,7 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 #endif
 	}
 
+#ifndef MIYOO_MINI
 	// Restore the rod
 	position.x = 400 - 7;
 	position.y = 300;
@@ -891,6 +901,7 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 	rodPosition.w = 14;
 	rodPosition.h = 300;
 	SDL_RenderCopy(mRenderer, mBackground, &rodPosition, &rodPosition);
+#endif
 
 	// Drawing the Ball
 	position = ballRect(gameState.getBallPosition());
@@ -905,32 +916,38 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 	SDL_RenderCopy(mRenderer, mBall[animationState], nullptr, &position);
 #endif
 
+#ifdef MIYOO_MINI
+    // update blob colors for MM
+    Color leftBlobColor = mBlobColor[LEFT_PLAYER];
+    Color rightBlobColor = mBlobColor[RIGHT_PLAYER];
+
+    int leftFrame = int(gameState.getBlobState(LEFT_PLAYER)) % mBlobSurfaces.size();
+    SDL_Surface* leftBlobColored = colorSurface(mBlobSurfaces[leftFrame], leftBlobColor);
+    SDL_Rect leftBlobPosition = blobRect(gameState.getBlobPosition(LEFT_PLAYER));
+
+    if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
+    SDL_BlitSurface(leftBlobColored, NULL, mMiyooSurface, &leftBlobPosition);
+    SDL_FreeSurface(leftBlobColored);
+    if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
+
+    int rightFrame = int(gameState.getBlobState(RIGHT_PLAYER)) % mBlobSurfaces.size();
+    SDL_Surface* rightBlobColored = colorSurface(mBlobSurfaces[rightFrame], rightBlobColor);
+    SDL_Rect rightBlobPosition = blobRect(gameState.getBlobPosition(RIGHT_PLAYER));
+
+    if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
+    SDL_BlitSurface(rightBlobColored, NULL, mMiyooSurface, &rightBlobPosition);
+    SDL_FreeSurface(rightBlobColored);
+    if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
+#else
 	// update blob colors
 	int leftFrame = int(gameState.getBlobState(LEFT_PLAYER)) % 5;
 	int rightFrame = int(gameState.getBlobState(RIGHT_PLAYER)) % 5;
 	colorizeBlobs(LEFT_PLAYER, leftFrame);
 	colorizeBlobs(RIGHT_PLAYER, rightFrame);
-
-#ifdef MIYOO_MINI
+    
 	// Drawing left blob
 	position = blobRect(gameState.getBlobPosition(LEFT_PLAYER));
-	srcRect = {0, 0, mBlobSurfaces[leftFrame]->w, mBlobSurfaces[leftFrame]->h};
-	SDL_Rect dstRect = {position.x, position.y, position.w, position.h};
-	if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
-	SDL_BlitSurface(mBlobSurfaces[leftFrame], &srcRect, mMiyooSurface, &dstRect);
-	if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
-
-	// Drawing right blob
-	position = blobRect(gameState.getBlobPosition(RIGHT_PLAYER));
-	srcRect = {0, 0, mBlobSurfaces[rightFrame]->w, mBlobSurfaces[rightFrame]->h};
-	dstRect = {position.x, position.y, position.w, position.h};
-	if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
-	SDL_BlitSurface(mBlobSurfaces[rightFrame], &srcRect, mMiyooSurface, &dstRect);
-	if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
-#else
-	// Drawing left blob
-	position = blobRect(gameState.getBlobPosition(LEFT_PLAYER));
-	SDL_RenderCopy( mRenderer, mLeftBlob[leftFrame].mSDLsf, nullptr, &position);
+	SDL_RenderCopy(mRenderer, mLeftBlob[leftFrame].mSDLsf, nullptr, &position);
 		
 	// Drawing right blob
 	position = blobRect(gameState.getBlobPosition(RIGHT_PLAYER));
