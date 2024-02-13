@@ -922,6 +922,7 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
         shadowPosition = blobShadowRect(blobShadowPosition(gameState.getBlobPosition(RIGHT_PLAYER)));
         SDL_BlitSurface(mBlobShadowSurfaces[rightFrame], nullptr, mMiyooSurface, &shadowPosition);
 #else
+        SDL_RenderCopy(mRenderer, mBallShadow, nullptr, &position);
         
 		// Left blob shadow
 		position = blobShadowRect(blobShadowPosition(gameState.getBlobPosition(LEFT_PLAYER)));
