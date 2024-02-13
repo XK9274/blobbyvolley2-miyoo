@@ -65,24 +65,25 @@ class RenderManagerSDL : public RenderManager
 			Color mColor;
 		};
 
-
-		SDL_Texture* mBackground;
-		SDL_Texture* mMarker[2];
-
 #ifdef MIYOO_MINI
-		SDL_Surface* mMiyooSurface;
+        SDL_Surface* mMiyooSurface;
         SDL_Surface* mOverlaySurface;
-		SDL_Surface* mBackgroundSurface;
+        SDL_Surface* mBackgroundSurface;
         SDL_Surface* mBallShadowSurf;
         std::vector<SDL_Surface*> mBlobSurfaces;
-		std::vector<SDL_Surface*> mFontSurfaces;
+        std::vector<SDL_Surface*> mFontSurfaces;
         std::vector<SDL_Surface*> mBlobShadowSurfaces;
-		std::vector<SDL_Surface*> mHighlightFontSurfaces;
-		std::vector<SDL_Surface*> mBallSurfaces; 
+        std::vector<SDL_Surface*> mHighlightFontSurfaces;
+        std::vector<SDL_Surface*> mBallSurfaces;
         std::vector<SDL_Surface*> mStandardBlobSurfaces;
         std::vector<SDL_Surface*> mStandardBlobShadowSurfaces;
         SDL_Surface* mStandardBlobBloodSurface;
+        SDL_Surface* mMarkerSurface[2];
+        // Renderstreaming to push changes with UpdateTexture
+		SDL_Texture* mRenderStreaming = nullptr;
 #else
+        SDL_Texture* mBackground;
+		SDL_Texture* mMarker[2];
 		std::vector<SDL_Texture*> mFont;
 		std::vector<SDL_Texture*> mBall;
 		std::vector<SDL_Texture*> mHighlightFont;
@@ -97,6 +98,8 @@ class RenderManagerSDL : public RenderManager
 		std::vector<DynamicColoredTexture> mRightBlob;
 		std::vector<DynamicColoredTexture> mRightBlobShadow;
 		DynamicColoredTexture mRightBlobBlood;
+        // Rendertarget to make windowmode resizeable
+		SDL_Texture* mRenderTarget = nullptr;
 #endif        
 
 		SDL_Texture* mOverlayTexture = nullptr;
@@ -108,13 +111,11 @@ class RenderManagerSDL : public RenderManager
 		// Store color for caching
 		Color mBlobColor[MAX_PLAYERS];
 
-		// Rendertarget to make windowmode resizeable
-		SDL_Texture* mRenderTarget = nullptr;
+
 
 		// colors a surface
 		// the returned SDL_Surface* is already converted into DisplayFormat
 		SDL_Surface* colorSurface(SDL_Surface *surface, Color color);
-
 
 		void drawTextImpl(const std::string& text, Vector2 position, unsigned int flags);
 		void colorizeBlobs(int player, int frame);

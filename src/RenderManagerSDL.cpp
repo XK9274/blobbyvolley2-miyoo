@@ -124,7 +124,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 
 	// Create rendertarget to make window resizeable
 #ifdef MIYOO_MINI
-	mRenderTarget = SDL_CreateTexture(mRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, xResolution, yResolution);
+	mRenderStreaming = SDL_CreateTexture(mRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, xResolution, yResolution);
 #else
 	mRenderTarget = SDL_CreateTexture(mRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, xResolution, yResolution);
 #endif
@@ -195,14 +195,24 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 
 	SDL_FreeSurface(tmpSurface);
 
-	// Create marker texture for mouse and ball
-	tmpSurface = SDL_CreateRGBSurface(0, 5, 5, 32,
-			0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
-	SDL_FillRect(tmpSurface, nullptr, SDL_MapRGB(tmpSurface->format, 255, 255, 255));
-	mMarker[0] = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
-	SDL_FillRect(tmpSurface, nullptr, SDL_MapRGB(tmpSurface->format, 0, 0, 0));
-	mMarker[1] = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
-	SDL_FreeSurface(tmpSurface);
+    // Create marker texture for mouse and ball
+    tmpSurface = SDL_CreateRGBSurface(0, 5, 5, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+
+#ifdef MIYOO_MINI
+    SDL_FillRect(tmpSurface, nullptr, SDL_MapRGB(tmpSurface->format, 255, 255, 255));
+    mMarkerSurface[0] = tmpSurface;
+
+    SDL_FillRect(tmpSurface, nullptr, SDL_MapRGB(tmpSurface->format, 0, 0, 0));
+    mMarkerSurface[1] = tmpSurface;
+#else
+    SDL_FillRect(tmpSurface, nullptr, SDL_MapRGB(tmpSurface->format, 255, 255, 255));
+    mMarker[0] = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
+
+    SDL_FillRect(tmpSurface, nullptr, SDL_MapRGB(tmpSurface->format, 0, 0, 0));
+    mMarker[1] = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
+#endif
+
+    SDL_FreeSurface(tmpSurface);
 
 	// Load ball
 	for (int i = 1; i <= 16; ++i)
@@ -496,7 +506,12 @@ RenderManagerSDL::~RenderManagerSDL()
     
 #endif
 
-	SDL_DestroyTexture(mRenderTarget);
+#ifdef MIYOO_MINI
+	SDL_DestroyTexture(mRenderStreaming);
+#else
+    SDL_DestroyTexture(mRenderTarget);
+#endif
+
 	SDL_DestroyRenderer(mRenderer);
 	SDL_DestroyWindow(mWindow);
 }
@@ -815,8 +830,8 @@ void RenderManagerSDL::refresh()
 {
 #ifdef MIYOO_MINI
 	SDL_RenderClear(mRenderer);
-	SDL_UpdateTexture(mRenderTarget, NULL, mMiyooSurface->pixels, mMiyooSurface->pitch);
-	SDL_RenderCopy(mRenderer, mRenderTarget, NULL, NULL);
+	SDL_UpdateTexture(mRenderStreaming, NULL, mMiyooSurface->pixels, mMiyooSurface->pitch);
+	SDL_RenderCopy(mRenderer, mRenderStreaming, NULL, NULL);
 	SDL_RenderPresent(mRenderer);
 #else
 	SDL_SetRenderTarget(mRenderer, nullptr);
@@ -854,19 +869,40 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 
 	SDL_Rect position;
 
-	// Ball marker
-	position.y = 5;
-	position.x = (int)lround(gameState.getBallPosition().x - 2.5);
-	position.w = 5;
-	position.h = 5;
-	SDL_RenderCopy(mRenderer, mMarker[(int)SDL_GetTicks() % 1000 >= 500], nullptr, &position);
+#ifdef MIYOO_MINI
+    if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
 
-	// Mouse marker
-	position.y = 590;
-	position.x = (int)lround(mMouseMarkerPosition - 2.5);
-	position.w = 5;
-	position.h = 5;
-	SDL_RenderCopy(mRenderer, mMarker[(int)SDL_GetTicks() % 1000 >= 500], nullptr, &position);
+    // Draw the background
+    SDL_BlitSurface(mBackgroundSurface, NULL, mMiyooSurface, NULL);
+
+    // Ball marker
+    position.y = 5;
+    position.x = (int)lround(gameState.getBallPosition().x - 2.5);
+    position.w = 5;
+    position.h = 5;
+    SDL_BlitSurface(mMarkerSurface[(int)SDL_GetTicks() % 1000 >= 500], NULL, mMiyooSurface, &position);
+
+    // Mouse marker
+    position.y = 590;
+    position.x = (int)lround(mMouseMarkerPosition - 2.5);
+    SDL_BlitSurface(mMarkerSurface[(int)SDL_GetTicks() % 1000 >= 500], NULL, mMiyooSurface, &position);
+
+    if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
+#else
+    SDL_RenderCopy(mRenderer, mBackground, nullptr, nullptr);
+
+    // Ball marker
+    position.y = 5;
+    position.x = (int)lround(gameState.getBallPosition().x - 2.5);
+    position.w = 5;
+    position.h = 5;
+    SDL_RenderCopy(mRenderer, mMarker[(int)SDL_GetTicks() % 1000 >= 500], nullptr, &position);
+
+    // Mouse marker
+    position.y = 590;
+    position.x = (int)lround(mMouseMarkerPosition - 2.5);
+    SDL_RenderCopy(mRenderer, mMarker[(int)SDL_GetTicks() % 1000 >= 500], nullptr, &position);
+#endif
 
 	if(mShowShadow)
 	{
