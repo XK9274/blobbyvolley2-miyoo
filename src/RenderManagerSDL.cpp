@@ -682,7 +682,7 @@ void RenderManagerSDL::drawImage(const std::string& filename, Vector2 position, 
     #ifdef MIYOO_MINI
     if (mMiyooSurface && imageBuffer->sdlSurface)
     {
-        SDL_Log("Drawing image %s at position (%d, %d).", filename.c_str(), blitRect.x, blitRect.y);
+        // SDL_Log("Drawing image %s at position (%d, %d).", filename.c_str(), blitRect.x, blitRect.y);
         if (filename == "background") // what's this? i hear you say. it's a dirty fat hack - surface lock/unlock issue
         {
             if (!SDL_MUSTLOCK(mMiyooSurface) || SDL_LockSurface(mMiyooSurface) == 0)
