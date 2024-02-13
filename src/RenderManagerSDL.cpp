@@ -133,8 +133,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	SDL_Surface* tmpSurface;
 
 #ifdef MIYOO_MINI
-	mOverlaySurface = SDL_CreateRGBSurface(0, 1, 1, 32,
-																				   0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+	mOverlaySurface = SDL_CreateRGBSurface(0, 1, 1, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
 	if (!mOverlaySurface) {
 		SDL_Log("Failed to create overlay surface: %s", SDL_GetError());
 	} else {
@@ -194,7 +193,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	}
 #endif
 
-	SDL_FreeSurface(tmpSurface); // Free the temporary surface as it's no longer needed
+	SDL_FreeSurface(tmpSurface);
 
 	// Create marker texture for mouse and ball
 	tmpSurface = SDL_CreateRGBSurface(0, 5, 5, 32,
@@ -205,7 +204,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	mMarker[1] = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
 	SDL_FreeSurface(tmpSurface);
 
-		// Load ball
+	// Load ball
 	for (int i = 1; i <= 16; ++i)
 		{
 			char filename[64];
@@ -592,57 +591,47 @@ void RenderManagerSDL::drawText(const std::string& text, Vector2 position, unsig
 	drawTextImpl(text, position, flags);
 }
 
-void RenderManagerSDL::drawTextImpl(const std::string& text, Vector2 position, unsigned int flags)
-{
-	int FontSize = (flags & TF_SMALL_FONT ? FONT_WIDTH_SMALL : FONT_WIDTH_NORMAL);
-	int length = 0;
+void RenderManagerSDL::drawTextImpl(const std::string& text, Vector2 position, unsigned int flags) {
+    int FontSize = (flags & TF_SMALL_FONT ? FONT_WIDTH_SMALL : FONT_WIDTH_NORMAL);
+    int length = 0;
 
-	for (auto iter = text.cbegin(); iter != text.cend(); )
-	{
-		int index = getNextFontIndex(iter);
+    for (auto iter = text.cbegin(); iter != text.cend();) {
+        int index = getNextFontIndex(iter);
 
-		if (flags & TF_OBFUSCATE)
-			index = FONT_INDEX_ASTERISK;
+        if (flags & TF_OBFUSCATE) {
+            index = FONT_INDEX_ASTERISK;
+        }
 
-#ifdef MIYOO_MINI
-		SDL_Rect charRect;
-		charRect.x = lround(position.x) + length;
-		charRect.y = lround(position.y);
-		charRect.w = FONT_WIDTH_SMALL;
-		charRect.h = FONT_WIDTH_SMALL;
+        
+        
+        bool isHighlight = flags & TF_HIGHLIGHT;
+        
+        #ifdef MIYOO_MINI
+        SDL_Surface* fontSurface = nullptr;
+        fontSurface = isHighlight ? mHighlightFontSurfaces[index] : mFontSurfaces[index];
+        #else
+        SDL_Texture* fontTexture = nullptr;
+        fontTexture = isHighlight ? mHighlightFont[index] : mFont[index];
+        #endif
 
-		SDL_Surface* fontSurface = nullptr;
-		if (flags & TF_SMALL_FONT)
-		{
-			fontSurface = (flags & TF_HIGHLIGHT) ? mHighlightFontSurfaces[index] : mFontSurfaces[index];
-		}
-		else
-		{
-			fontSurface = (flags & TF_HIGHLIGHT) ? mHighlightFontSurfaces[index] : mFontSurfaces[index];
-		}
+        SDL_Rect charRect = {
+            lround(position.x) + length,
+            lround(position.y),
+            FontSize,
+            FontSize
+        };
 
-		if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
-		SDL_BlitSurface(fontSurface, nullptr, mMiyooSurface, &charRect);
-		if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
-#else
-		SDL_Rect charRect;
-		charRect.x = lround(position.x) + length;
-		charRect.y = lround(position.y);
+        #ifdef MIYOO_MINI
+        if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
+        SDL_BlitSurface(fontSurface, nullptr, mMiyooSurface, &charRect);
+        if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
+        #else
+        SDL_QueryTexture(fontTexture, nullptr, nullptr, &charRect.w, &charRect.h);
+        SDL_RenderCopy(mRenderer, fontTexture, nullptr, &charRect);
+        #endif
 
-		if (flags & TF_SMALL_FONT)
-		{
-			charRect.w = FONT_WIDTH_SMALL;
-			charRect.h = FONT_WIDTH_SMALL;
-			SDL_RenderCopy(mRenderer, (flags & TF_HIGHLIGHT) ? mHighlightFont[index] : mFont[index], nullptr, &charRect);
-		}
-		else
-		{
-			SDL_QueryTexture((flags & TF_HIGHLIGHT) ? mHighlightFont[index] : mFont[index], nullptr, nullptr, &charRect.w, &charRect.h);
-			SDL_RenderCopy(mRenderer, (flags & TF_HIGHLIGHT) ? mHighlightFont[index] : mFont[index], nullptr, &charRect);
-		}
-#endif
-		length += FontSize;
-	}
+        length += FontSize;
+    }
 }
 
 void RenderManagerSDL::drawImage(const std::string& filename, Vector2 position, Vector2 size)
@@ -690,14 +679,32 @@ void RenderManagerSDL::drawImage(const std::string& filename, Vector2 position, 
 		};
 	}
 
-	#ifdef MIYOO_MINI
-		if (mMiyooSurface && imageBuffer->sdlSurface)
-		{
-			SDL_BlitSurface(imageBuffer->sdlSurface, nullptr, mMiyooSurface, &blitRect);
-		}
-	#else
-		SDL_RenderCopy(mRenderer, imageBuffer->sdlImage, nullptr, &blitRect);
-	#endif
+    #ifdef MIYOO_MINI
+    if (mMiyooSurface && imageBuffer->sdlSurface)
+    {
+        SDL_Log("Drawing image %s at position (%d, %d).", filename.c_str(), blitRect.x, blitRect.y);
+        if (filename == "background") // what's this? i hear you say. it's a dirty fat hack - surface lock/unlock issue
+        {
+            if (!SDL_MUSTLOCK(mMiyooSurface) || SDL_LockSurface(mMiyooSurface) == 0)
+            {                
+                if (mBackgroundSurface)
+                {
+                    SDL_BlitSurface(mBackgroundSurface, nullptr, mMiyooSurface, &blitRect);
+                }
+                
+                if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
+            }
+        }
+        else
+        {
+            if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
+            SDL_BlitSurface(imageBuffer->sdlSurface, nullptr, mMiyooSurface, &blitRect);
+            if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
+        }
+    }
+    #else
+        SDL_RenderCopy(mRenderer, imageBuffer->sdlImage, nullptr, &blitRect);
+    #endif
 }
 
 
@@ -711,8 +718,7 @@ void RenderManagerSDL::drawOverlay(float opacity, Vector2 pos1, Vector2 pos2, Co
 
 #ifdef MIYOO_MINI
 		if (mOverlaySurface != nullptr) {
-				SDL_Surface* resizedOverlay = SDL_CreateRGBSurface(0, ovRect.w, ovRect.h, 32,
-																												   0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+				SDL_Surface* resizedOverlay = SDL_CreateRGBSurface(0, ovRect.w, ovRect.h, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
 				if (resizedOverlay) {
 						SDL_FillRect(resizedOverlay, NULL, SDL_MapRGBA(resizedOverlay->format, col.r, col.g, col.b, static_cast<Uint8>(lround(opacity * 255))));
 						SDL_SetSurfaceBlendMode(resizedOverlay, SDL_BLENDMODE_BLEND);
