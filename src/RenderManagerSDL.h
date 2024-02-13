@@ -66,6 +66,11 @@ class RenderManagerSDL : public RenderManager
 		};
 
 #ifdef MIYOO_MINI
+        /*
+        Miyoo Mini custom SDL2 requires a streaming texture
+        You'll use it similar to SDL1.2, composite to a single surface, 
+        then "UpdateTexture" to your final texture and present it
+        */
         SDL_Surface* mMiyooSurface;
         SDL_Surface* mOverlaySurface;
         SDL_Surface* mBackgroundSurface;
