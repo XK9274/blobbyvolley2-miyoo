@@ -502,27 +502,38 @@ RenderManagerSDL::~RenderManagerSDL()
 
 bool RenderManagerSDL::setBackground(const std::string& filename)
 {
-	try
-	{
-		SDL_Surface *tempBackgroundSurface = loadSurface(filename);
-		SDL_Texture *tempBackgroundTexture = SDL_CreateTextureFromSurface(mRenderer, tempBackgroundSurface);
-		BufferedImage* oldBackground = mImageMap["background"];
-		SDL_DestroyTexture(oldBackground->sdlImage);
-		delete oldBackground;
+    try
+    {
+        SDL_Surface* tempBackgroundSurface = loadSurface(filename);
+ #ifdef MIYOO_MINI
+        if (mBackgroundSurface) {
+            SDL_FreeSurface(mBackgroundSurface); 
+        }
+        mBackgroundSurface = tempBackgroundSurface; 
+#else
+        SDL_Texture* tempBackgroundTexture = SDL_CreateTextureFromSurface(mRenderer, tempBackgroundSurface);
+        SDL_FreeSurface(tempBackgroundSurface);
 
-		BufferedImage* newImage = new BufferedImage;
-		newImage->w = tempBackgroundSurface->w;
-		newImage->h = tempBackgroundSurface->h;
-		newImage->sdlImage = tempBackgroundTexture;
-		SDL_FreeSurface(tempBackgroundSurface);
-		mBackground = newImage->sdlImage;
-		mImageMap["background"] = newImage;
-	}
-	catch (const FileLoadException&)
-	{
-		return false;
-	}
-	return true;
+        BufferedImage* oldBackground = mImageMap["background"];
+        if (oldBackground) {
+            SDL_DestroyTexture(oldBackground->sdlImage);
+            delete oldBackground;
+        }
+
+        BufferedImage* newImage = new BufferedImage;
+        newImage->w = tempBackgroundSurface->w;
+        newImage->h = tempBackgroundSurface->h;
+        newImage->sdlImage = tempBackgroundTexture;
+        mBackground = tempBackgroundTexture;
+        mImageMap["background"] = newImage;
+#endif
+        return true;
+    }
+    catch (const FileLoadException& e)
+    {
+        SDL_Log("Error loading background: %s", e.what());
+        return false;
+    }
 }
 
 void RenderManagerSDL::setBlobColor(int player, Color color)
@@ -917,11 +928,11 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 	SDL_BlitSurface(mBlobSurfaces[rightFrame], &srcRect, mMiyooSurface, &dstRect);
 	if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
 #else
-		// Drawing left blob
+	// Drawing left blob
 	position = blobRect(gameState.getBlobPosition(LEFT_PLAYER));
 	SDL_RenderCopy( mRenderer, mLeftBlob[leftFrame].mSDLsf, nullptr, &position);
 		
-		// Drawing right blob
+	// Drawing right blob
 	position = blobRect(gameState.getBlobPosition(RIGHT_PLAYER));
 	SDL_RenderCopy(mRenderer, mRightBlob[rightFrame].mSDLsf, nullptr, &position);
 #endif

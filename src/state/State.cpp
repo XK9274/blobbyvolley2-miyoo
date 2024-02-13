@@ -176,7 +176,7 @@ void CreditsState::step_impl()
     imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
 
 #ifdef MIYOO_MINI // move it over for the miyoo because i haven't fixed TF_SMALL_FONT
-    const float xPosition = 25;
+    const float xPosition = 20;
 #else
     const float xPosition = 50;
 #endif
