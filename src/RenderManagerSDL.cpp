@@ -133,7 +133,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	SDL_Surface* tmpSurface;
 
 #ifdef MIYOO_MINI
-	mOverlaySurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32,
+	mOverlaySurface = SDL_CreateRGBSurface(0, 1, 1, 32,
                                            0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
 	if (!mOverlaySurface) {
 		SDL_Log("Failed to create overlay surface: %s", SDL_GetError());
@@ -682,9 +682,14 @@ void RenderManagerSDL::drawOverlay(float opacity, Vector2 pos1, Vector2 pos2, Co
 
 #ifdef MIYOO_MINI
     if (mOverlaySurface != nullptr) {
-        SDL_SetSurfaceBlendMode(mOverlaySurface, SDL_BLENDMODE_BLEND);
-        SDL_SetSurfaceAlphaMod(mOverlaySurface, static_cast<Uint8>(lround(opacity * 255)));
-        SDL_BlitSurface(mOverlaySurface, NULL, mMiyooSurface, &ovRect);
+        SDL_Surface* resizedOverlay = SDL_CreateRGBSurface(0, ovRect.w, ovRect.h, 32,
+                                                           0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+        if (resizedOverlay) {
+            SDL_FillRect(resizedOverlay, NULL, SDL_MapRGBA(resizedOverlay->format, col.r, col.g, col.b, static_cast<Uint8>(lround(opacity * 255))));
+            SDL_SetSurfaceBlendMode(resizedOverlay, SDL_BLENDMODE_BLEND);
+            SDL_BlitSurface(resizedOverlay, NULL, mMiyooSurface, &ovRect);
+            SDL_FreeSurface(resizedOverlay);
+        }
     }
 #else
     SDL_SetTextureAlphaMod(mOverlayTexture, static_cast<Uint8>(lround(opacity * 255)));
