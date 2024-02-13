@@ -132,13 +132,22 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 	// Load all textures and surfaces to render the game
 	SDL_Surface* tmpSurface;
 
-	// Create a 1x1 black surface which will be scaled to draw an overlay
-	tmpSurface = SDL_CreateRGBSurface(0, 1, 1, 32,
-			0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+#ifdef MIYOO_MINI
+	mOverlaySurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32,
+                                           0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+	if (!mOverlaySurface) {
+		SDL_Log("Failed to create overlay surface: %s", SDL_GetError());
+	} else {
+		SDL_SetSurfaceBlendMode(mOverlaySurface, SDL_BLENDMODE_BLEND);
+		SDL_FillRect(mOverlaySurface, NULL, SDL_MapRGBA(mOverlaySurface->format, 0, 0, 0, 0x7F));
+	}
+#else
+	tmpSurface = SDL_CreateRGBSurface(0, 1, 1, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
 	// Because of SDL bug we can't check at the moment if color mod is available... no risk no fun ;)
 	SDL_FillRect(tmpSurface, nullptr, SDL_MapRGB(tmpSurface->format, 255, 255, 255));
 	mOverlayTexture = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
 	SDL_FreeSurface(tmpSurface);
+#endif
 
 	// Load background
 	tmpSurface = loadSurface("backgrounds/strand2.bmp");
@@ -152,9 +161,10 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 #ifdef MIYOO_MINI
 	mMiyooSurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
 	if (!mMiyooSurface) {
-		DEBUG_STATUS("Unable to create background surface.");
-		delete bgImage;
-		return;
+		SDL_Log("Failed to create miyoo surface: %s", SDL_GetError());
+	} else {
+		SDL_SetSurfaceBlendMode(mMiyooSurface, SDL_BLENDMODE_BLEND);
+		SDL_FillRect(mMiyooSurface, NULL, SDL_MapRGBA(mMiyooSurface->format, 0, 0, 0, 0));
 	}
 	
 	mBackgroundSurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
@@ -517,29 +527,29 @@ void RenderManagerSDL::colorizeBlobs(int player, int frame)
 	std::vector<DynamicColoredTexture> *handledBlob = nullptr;
 	std::vector<DynamicColoredTexture> *handledBlobShadow = nullptr;
 
-	if (player == LEFT_PLAYER)
-	{
-		handledBlob = &mLeftBlob;
-		handledBlobShadow = &mLeftBlobShadow;
-	}
-	if (player == RIGHT_PLAYER)
-	{
-		handledBlob = &mRightBlob;
-		handledBlobShadow = &mRightBlobShadow;
-	}
+	// if (player == LEFT_PLAYER)
+	// {
+		// handledBlob = &mLeftBlob;
+		// handledBlobShadow = &mLeftBlobShadow;
+	// }
+	// if (player == RIGHT_PLAYER)
+	// {
+		// handledBlob = &mRightBlob;
+		// handledBlobShadow = &mRightBlobShadow;
+	// }
 
-	if( (*handledBlob)[frame].mColor != mBlobColor[player])
-	{
-		SDL_Surface* tempSurface = colorSurface(mStandardBlob[frame], mBlobColor[player]);
-		SDL_UpdateTexture((*handledBlob)[frame].mSDLsf, nullptr, tempSurface->pixels, tempSurface->pitch);
-		SDL_FreeSurface(tempSurface);
+	// if( (*handledBlob)[frame].mColor != mBlobColor[player])
+	// {
+		// SDL_Surface* tempSurface = colorSurface(mStandardBlob[frame], mBlobColor[player]);
+		// SDL_UpdateTexture((*handledBlob)[frame].mSDLsf, nullptr, tempSurface->pixels, tempSurface->pitch);
+		// SDL_FreeSurface(tempSurface);
 
-		SDL_Surface* tempSurface2 = colorSurface(mStandardBlobShadow[frame], mBlobColor[player]);
-		SDL_UpdateTexture((*handledBlobShadow)[frame].mSDLsf, nullptr, tempSurface2->pixels, tempSurface2->pitch);
-		SDL_FreeSurface(tempSurface2);
+		// SDL_Surface* tempSurface2 = colorSurface(mStandardBlobShadow[frame], mBlobColor[player]);
+		// SDL_UpdateTexture((*handledBlobShadow)[frame].mSDLsf, nullptr, tempSurface2->pixels, tempSurface2->pitch);
+		// SDL_FreeSurface(tempSurface2);
 
-		(*handledBlob)[frame].mColor = mBlobColor[player];
-	}
+		// (*handledBlob)[frame].mColor = mBlobColor[player];
+	// }
 }
 
 
@@ -664,14 +674,23 @@ void RenderManagerSDL::drawImage(const std::string& filename, Vector2 position, 
 
 void RenderManagerSDL::drawOverlay(float opacity, Vector2 pos1, Vector2 pos2, Color col)
 {
-	SDL_Rect ovRect;
-	ovRect.x = (int)lround(pos1.x);
-	ovRect.y = (int)lround(pos1.y);
-	ovRect.w = (int)lround(pos2.x - pos1.x);
-	ovRect.h = (int)lround(pos2.y - pos1.y);
-	SDL_SetTextureAlphaMod(mOverlayTexture, lround(opacity * 255));
-	SDL_SetTextureColorMod(mOverlayTexture, col.r, col.g, col.b);
-	SDL_RenderCopy(mRenderer, mOverlayTexture, nullptr, &ovRect);
+    SDL_Rect ovRect;
+    ovRect.x = static_cast<int>(lround(pos1.x));
+    ovRect.y = static_cast<int>(lround(pos1.y));
+    ovRect.w = static_cast<int>(lround(pos2.x - pos1.x));
+    ovRect.h = static_cast<int>(lround(pos2.y - pos1.y));
+
+#ifdef MIYOO_MINI
+    if (mOverlaySurface != nullptr) {
+        SDL_SetSurfaceBlendMode(mOverlaySurface, SDL_BLENDMODE_BLEND);
+        SDL_SetSurfaceAlphaMod(mOverlaySurface, static_cast<Uint8>(lround(opacity * 255)));
+        SDL_BlitSurface(mOverlaySurface, NULL, mMiyooSurface, &ovRect);
+    }
+#else
+    SDL_SetTextureAlphaMod(mOverlayTexture, static_cast<Uint8>(lround(opacity * 255)));
+    SDL_SetTextureColorMod(mOverlayTexture, col.r, col.g, col.b);
+    SDL_RenderCopy(mRenderer, mOverlayTexture, nullptr, &ovRect);
+#endif
 }
 
 void RenderManagerSDL::drawBlob(const Vector2& pos, const Color& col)
@@ -754,7 +773,7 @@ void RenderManagerSDL::refresh()
 void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 {
 #ifdef MIYOO_MINI
-	// SDL_BlitSurface(mBackgroundSurface, NULL, mMiyooSurface, NULL);
+	SDL_BlitSurface(mBackgroundSurface, NULL, mMiyooSurface, NULL);
 #else
 	SDL_RenderCopy(mRenderer, mBackground, nullptr, nullptr);
 #endif
