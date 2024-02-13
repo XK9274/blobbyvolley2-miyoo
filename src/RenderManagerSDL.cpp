@@ -614,7 +614,6 @@ void RenderManagerSDL::colorizeBlobs(int player, int frame)
 #endif
 }
 
-
 void RenderManagerSDL::showShadow(bool shadow)
 {
 	mShowShadow = shadow;
@@ -636,8 +635,6 @@ void RenderManagerSDL::drawTextImpl(const std::string& text, Vector2 position, u
             index = FONT_INDEX_ASTERISK;
         }
 
-        
-        
         bool isHighlight = flags & TF_HIGHLIGHT;
         
 #ifdef MIYOO_MINI
@@ -680,10 +677,10 @@ void RenderManagerSDL::drawImage(const std::string& filename, Vector2 position, 
 				SDL_MapRGB(tmpSurface->format, 0, 0, 0));
 		
 #ifdef MIYOO_MINI
-			imageBuffer->sdlSurface = tmpSurface;
+		imageBuffer->sdlSurface = tmpSurface;
 #else
-			imageBuffer->sdlImage = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
-			SDL_FreeSurface(tmpSurface);
+		imageBuffer->sdlImage = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
+		SDL_FreeSurface(tmpSurface);
 #endif
 
 		imageBuffer->w = tmpSurface->w;
@@ -713,7 +710,7 @@ void RenderManagerSDL::drawImage(const std::string& filename, Vector2 position, 
 		};
 	}
 
-    #ifdef MIYOO_MINI
+#ifdef MIYOO_MINI
     if (mMiyooSurface && imageBuffer->sdlSurface)
     {
         // SDL_Log("Drawing image %s at position (%d, %d).", filename.c_str(), blitRect.x, blitRect.y);
@@ -736,9 +733,9 @@ void RenderManagerSDL::drawImage(const std::string& filename, Vector2 position, 
             if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
         }
     }
-    #else
+#else
         SDL_RenderCopy(mRenderer, imageBuffer->sdlImage, nullptr, &blitRect);
-    #endif
+#endif
 }
 
 
@@ -774,7 +771,8 @@ void RenderManagerSDL::drawBlob(const Vector2& pos, const Color& col)
 	setBlobColor(toDraw, col);
 	/// \todo this recolores the current frame (0)
 	/// + shadows; that's not exactly what we want
-#ifndef MIYOO_MINI
+    // we only want to set the blob colour here in MM mode
+#ifndef MIYOO_MINI 
 	colorizeBlobs(toDraw, 0);
     SDL_Rect position;
 	position.x = (int)lround(pos.x);
@@ -908,15 +906,12 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 	{
 		// Ball Shadow
 		SDL_Rect position = ballShadowRect(ballShadowPosition(gameState.getBallPosition()));
+        
 #ifdef MIYOO_MINI
-		if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
+        if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
 		SDL_BlitSurface(mBallShadowSurf, nullptr, mMiyooSurface, &position);
 		if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
-#else
-		SDL_RenderCopy(mRenderer, mBallShadow, nullptr, &position);
-#endif
-
-#ifdef MIYOO_MINI
+        
         // Drawing left blob shadow
         int leftFrame = int(gameState.getBlobState(LEFT_PLAYER)) % mBlobShadowSurfaces.size();
         SDL_Rect shadowPosition = blobShadowRect(blobShadowPosition(gameState.getBlobPosition(LEFT_PLAYER)));
@@ -927,6 +922,7 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
         shadowPosition = blobShadowRect(blobShadowPosition(gameState.getBlobPosition(RIGHT_PLAYER)));
         SDL_BlitSurface(mBlobShadowSurfaces[rightFrame], nullptr, mMiyooSurface, &shadowPosition);
 #else
+        
 		// Left blob shadow
 		position = blobShadowRect(blobShadowPosition(gameState.getBlobPosition(LEFT_PLAYER)));
 		int animationState = int(gameState.getBlobState(LEFT_PLAYER)) % 5;
@@ -937,6 +933,7 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 		animationState = int(gameState.getBlobState(RIGHT_PLAYER)) % 5;
 		SDL_RenderCopy(mRenderer, mRightBlobShadow[animationState].mSDLsf, nullptr, &position);
 #endif
+
 	}
 
 #ifndef MIYOO_MINI
