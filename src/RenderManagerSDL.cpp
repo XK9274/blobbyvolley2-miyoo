@@ -339,8 +339,6 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 		SDL_Surface* tempFontHighlighted = highlightSurface(tempFont, 60);
 		if (tempFontHighlighted != nullptr) {
 			mHighlightFontSurfaces.push_back(tempFontHighlighted);
-		} else {
-			DEBUG_STATUS("HELP");
 		}
 #else
 		SDL_Texture* fontTexture = SDL_CreateTextureFromSurface(mRenderer, tempFont);
@@ -414,14 +412,21 @@ RenderManagerSDL::~RenderManagerSDL()
 	for (auto& surface : mHighlightFontSurfaces) {
 		SDL_FreeSurface(surface);
 	}
+    
+    for(const auto& image : mImageMap) {
+		SDL_FreeSurface(image.second->sdlSurface);
+		delete image.second;
+	}
+    
 #else
-		SDL_DestroyTexture(mBallShadow);
-#endif
-
-	SDL_DestroyTexture(mOverlayTexture);
-	SDL_DestroyTexture(mRenderTarget);
-
-	for(auto& i : mMarker) {
+	for (unsigned int i = 0; i < mFont.size(); ++i)
+	{
+		SDL_DestroyTexture(mFont[i]);
+		SDL_DestroyTexture(mHighlightFont[i]);
+	}
+    
+	SDL_DestroyTexture(mBallShadow);
+    for(auto& i : mMarker) {
 		SDL_DestroyTexture(i);
 	}
 
@@ -441,19 +446,17 @@ RenderManagerSDL::~RenderManagerSDL()
 	SDL_FreeSurface(mStandardBlobBlood);
 	SDL_DestroyTexture(mLeftBlobBlood.mSDLsf);
 	SDL_DestroyTexture(mRightBlobBlood.mSDLsf);
-
-#ifndef MIYOO_MINI
-	for (unsigned int i = 0; i < mFont.size(); ++i)
-	{
-		SDL_DestroyTexture(mFont[i]);
-		SDL_DestroyTexture(mHighlightFont[i]);
-	}
-#endif
-
-	for(const auto& image : mImageMap) {
+    
+    for(const auto& image : mImageMap) {
 		SDL_DestroyTexture(image.second->sdlImage);
 		delete image.second;
 	}
+#endif
+
+	SDL_DestroyTexture(mOverlayTexture);
+	SDL_DestroyTexture(mRenderTarget);
+
+
 
 	SDL_DestroyRenderer(mRenderer);
 	SDL_DestroyWindow(mWindow);
@@ -751,7 +754,7 @@ void RenderManagerSDL::refresh()
 void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 {
 #ifdef MIYOO_MINI
-	SDL_BlitSurface(mBackgroundSurface, NULL, mMiyooSurface, NULL);
+	// SDL_BlitSurface(mBackgroundSurface, NULL, mMiyooSurface, NULL);
 #else
 	SDL_RenderCopy(mRenderer, mBackground, nullptr, nullptr);
 #endif
