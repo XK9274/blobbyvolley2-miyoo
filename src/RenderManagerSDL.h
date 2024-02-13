@@ -81,7 +81,7 @@ class RenderManagerSDL : public RenderManager
 		std::vector<SDL_Surface*> mBallSurfaces; 
         std::vector<SDL_Surface*> mStandardBlobSurfaces;
         std::vector<SDL_Surface*> mStandardBlobShadowSurfaces;
-        
+        SDL_Surface* mStandardBlobBloodSurface;
 #else
 		std::vector<SDL_Texture*> mFont;
 		std::vector<SDL_Texture*> mBall;
@@ -89,16 +89,15 @@ class RenderManagerSDL : public RenderManager
         SDL_Texture* mBallShadow;
 		std::vector<SDL_Surface*> mStandardBlob;
 		std::vector<SDL_Surface*> mStandardBlobShadow;
-#endif        
-
-		SDL_Surface* mStandardBlobBlood;
-		std::vector<DynamicColoredTexture> mLeftBlob;
+        SDL_Surface* mStandardBlobBlood;
+        
+        std::vector<DynamicColoredTexture> mLeftBlob;
 		std::vector<DynamicColoredTexture> mLeftBlobShadow;
 		DynamicColoredTexture mLeftBlobBlood;
-
 		std::vector<DynamicColoredTexture> mRightBlob;
 		std::vector<DynamicColoredTexture> mRightBlobShadow;
 		DynamicColoredTexture mRightBlobBlood;
+#endif        
 
 		SDL_Texture* mOverlayTexture = nullptr;
 

@@ -388,8 +388,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 		SDL_FreeSurface(tempFont2);
 #endif
 	}
-#ifdef MIYOO_MINI
-#else
+    
 	// Load blood surface
 	SDL_Surface* blobStandardBlood = loadSurface("gfx/blood.bmp");
 	SDL_Surface* formattedBlobStandardBlood = SDL_ConvertSurfaceFormat(blobStandardBlood, SDL_PIXELFORMAT_ABGR8888, 0);
@@ -407,8 +406,11 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 		}
 	}
 
-	mStandardBlobBlood = formattedBlobStandardBlood;
-
+#ifdef MIYOO_MINI
+    mStandardBlobBloodSurface = formattedBlobStandardBlood;
+#else
+    mStandardBlobBlood = formattedBlobStandardBlood;
+    
 	// Create streamed textures for blood
 	SDL_Texture* leftBlobBlood = SDL_CreateTexture(mRenderer,
 			SDL_PIXELFORMAT_ABGR8888,
@@ -450,13 +452,13 @@ RenderManagerSDL::~RenderManagerSDL()
 	for (auto& surface : mHighlightFontSurfaces) {
 		SDL_FreeSurface(surface);
 	}
-	// for(const auto& image : mImageMap) {
+	// for(const auto& image : mImageMap) { // causes segs
 		// SDL_FreeSurface(image.second->sdlSurface);
 		// delete image.second;
 	// }
-	// for (auto& surface : mBlobShadowSurfaces) {
-		// SDL_FreeSurface(surface);
-	// }		
+	for (auto& surface : mBlobShadowSurfaces) {
+		SDL_FreeSurface(surface);
+	}		
 #else
 	for (unsigned int i = 0; i < mFont.size(); ++i)
 	{
@@ -546,6 +548,7 @@ void RenderManagerSDL::setBlobColor(int player, Color color)
 		return;
 	}
     
+#ifndef MIYOO_MINI
 	DynamicColoredTexture* handledBlobBlood;
 
 	if (player == LEFT_PLAYER)
@@ -560,6 +563,8 @@ void RenderManagerSDL::setBlobColor(int player, Color color)
     SDL_Surface* tempSurface = colorSurface(mStandardBlobBlood, mBlobColor[player]);
 	SDL_UpdateTexture(handledBlobBlood->mSDLsf, nullptr, tempSurface->pixels, tempSurface->pitch);
 	SDL_FreeSurface(tempSurface);
+#endif
+
 }
 
 void RenderManagerSDL::colorizeBlobs(int player, int frame)
@@ -659,12 +664,12 @@ void RenderManagerSDL::drawImage(const std::string& filename, Vector2 position, 
 		SDL_SetColorKey(tmpSurface, SDL_TRUE,
 				SDL_MapRGB(tmpSurface->format, 0, 0, 0));
 		
-		#ifdef MIYOO_MINI
+#ifdef MIYOO_MINI
 			imageBuffer->sdlSurface = tmpSurface;
-		#else
+#else
 			imageBuffer->sdlImage = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
 			SDL_FreeSurface(tmpSurface);
-		#endif
+#endif
 
 		imageBuffer->w = tmpSurface->w;
 		imageBuffer->h = tmpSurface->h;
@@ -749,10 +754,6 @@ void RenderManagerSDL::drawOverlay(float opacity, Vector2 pos1, Vector2 pos2, Co
 
 void RenderManagerSDL::drawBlob(const Vector2& pos, const Color& col)
 {
-	SDL_Rect position;
-	position.x = (int)lround(pos.x);
-	position.y = (int)lround(pos.y);
-
 	static int toDraw = 0;
 
 	setBlobColor(toDraw, col);
@@ -760,7 +761,9 @@ void RenderManagerSDL::drawBlob(const Vector2& pos, const Color& col)
 	/// + shadows; that's not exactly what we want
 #ifndef MIYOO_MINI
 	colorizeBlobs(toDraw, 0);
-
+    SDL_Rect position;
+	position.x = (int)lround(pos.x);
+	position.y = (int)lround(pos.y);
 
 	//  Second dirty workaround in the function to have the right position of blobs in the GUI
 	position.x = position.x - (int)(75/2);
@@ -783,16 +786,28 @@ void RenderManagerSDL::drawBlob(const Vector2& pos, const Color& col)
 
 void RenderManagerSDL::drawParticle(const Vector2& pos, int player)
 {
-	SDL_Rect blitRect = {
-		(short)lround(pos.x - float(9) / 2.0),
-		(short)lround(pos.y - float(9) / 2.0),
-		(short)9,
-		(short)9,
-	};
+    SDL_Rect blitRect = {
+        (short)lround(pos.x - float(9) / 2.0),
+        (short)lround(pos.y - float(9) / 2.0),
+        (short)9,
+        (short)9,
+    };
 
-	DynamicColoredTexture blood = player == LEFT_PLAYER ? mLeftBlobBlood : mRightBlobBlood;
-#ifndef MIYOO_MINI
-	SDL_RenderCopy(mRenderer, blood.mSDLsf, nullptr, &blitRect);
+#ifdef MIYOO_MINI
+    Color bloodColor = (player == LEFT_PLAYER) ? mBlobColor[LEFT_PLAYER] : mBlobColor[RIGHT_PLAYER];
+    
+    if (mStandardBlobBloodSurface) {
+        SDL_Surface* coloredBloodSurface = colorSurface(mStandardBlobBloodSurface, bloodColor);
+
+        if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
+        SDL_BlitSurface(coloredBloodSurface, nullptr, mMiyooSurface, &blitRect);
+        if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
+        
+        SDL_FreeSurface(coloredBloodSurface);
+    }
+#else
+    DynamicColoredTexture blood = player == LEFT_PLAYER ? mLeftBlobBlood : mRightBlobBlood;
+    SDL_RenderCopy(mRenderer, blood.mSDLsf, nullptr, &blitRect);
 #endif
 }
 
@@ -899,7 +914,6 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 	rodPosition.h = 300;
 	SDL_RenderCopy(mRenderer, mBackground, &rodPosition, &rodPosition);
 #endif
-
 	// Drawing the Ball
 	position = ballRect(gameState.getBallPosition());
 	int animationState = int(gameState.getBallRotation() / M_PI / 2 * 16) % 16;
