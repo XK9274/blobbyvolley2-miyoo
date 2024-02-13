@@ -450,14 +450,13 @@ RenderManagerSDL::~RenderManagerSDL()
 	for (auto& surface : mHighlightFontSurfaces) {
 		SDL_FreeSurface(surface);
 	}
-	for (auto& surface : mBlobShadowSurfaces) {
-		SDL_FreeSurface(surface);
-	}	
-	for(const auto& image : mImageMap) {
-		SDL_FreeSurface(image.second->sdlSurface);
-		delete image.second;
-	}
-		
+	// for(const auto& image : mImageMap) {
+		// SDL_FreeSurface(image.second->sdlSurface);
+		// delete image.second;
+	// }
+	// for (auto& surface : mBlobShadowSurfaces) {
+		// SDL_FreeSurface(surface);
+	// }		
 #else
 	for (unsigned int i = 0; i < mFont.size(); ++i)
 	{
@@ -491,13 +490,11 @@ RenderManagerSDL::~RenderManagerSDL()
 		SDL_DestroyTexture(image.second->sdlImage);
 		delete image.second;
 	}
+    SDL_DestroyTexture(mOverlayTexture);
+    
 #endif
 
-	SDL_DestroyTexture(mOverlayTexture);
 	SDL_DestroyTexture(mRenderTarget);
-
-
-
 	SDL_DestroyRenderer(mRenderer);
 	SDL_DestroyWindow(mWindow);
 }
@@ -795,7 +792,7 @@ void RenderManagerSDL::drawParticle(const Vector2& pos, int player)
 
 	DynamicColoredTexture blood = player == LEFT_PLAYER ? mLeftBlobBlood : mRightBlobBlood;
 #ifndef MIYOO_MINI
-        SDL_RenderCopy(mRenderer, blood.mSDLsf, nullptr, &blitRect);
+	SDL_RenderCopy(mRenderer, blood.mSDLsf, nullptr, &blitRect);
 #endif
 }
 
