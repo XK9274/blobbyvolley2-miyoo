@@ -71,23 +71,26 @@ class RenderManagerSDL : public RenderManager
 
 #ifdef MIYOO_MINI
 		SDL_Surface* mMiyooSurface;
+        SDL_Surface* mOverlaySurface;
 		SDL_Surface* mBackgroundSurface;
         SDL_Surface* mBallShadowSurf;
         std::vector<SDL_Surface*> mBlobSurfaces;
 		std::vector<SDL_Surface*> mFontSurfaces;
+        std::vector<SDL_Surface*> mBlobShadowSurfaces;
 		std::vector<SDL_Surface*> mHighlightFontSurfaces;
 		std::vector<SDL_Surface*> mBallSurfaces; 
         std::vector<SDL_Surface*> mStandardBlobSurfaces;
         std::vector<SDL_Surface*> mStandardBlobShadowSurfaces;
+        
 #else
 		std::vector<SDL_Texture*> mFont;
+		std::vector<SDL_Texture*> mBall;
 		std::vector<SDL_Texture*> mHighlightFont;
         SDL_Texture* mBallShadow;
-#endif        
-		std::vector<SDL_Texture*> mBall;
-        
 		std::vector<SDL_Surface*> mStandardBlob;
 		std::vector<SDL_Surface*> mStandardBlobShadow;
+#endif        
+
 		SDL_Surface* mStandardBlobBlood;
 		std::vector<DynamicColoredTexture> mLeftBlob;
 		std::vector<DynamicColoredTexture> mLeftBlobShadow;

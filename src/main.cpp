@@ -230,7 +230,7 @@ int main(int argc, char* argv[])
 	catch (std::exception& e)
 	{
 		std::cerr << e.what() << std::endl;
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", (std::string("An error occurred, blobby will close: ") + e.what()).c_str(), nullptr);
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", (std::string("An error occurred, blobby will close: ") + e.what()).c_str(), nullptr); // i don't think these work in our sdl
 		SDL_Quit();
 #if (defined __SWITCH__) && (defined DEBUG)
 	socketExit();

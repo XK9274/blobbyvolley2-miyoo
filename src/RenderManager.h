@@ -66,6 +66,7 @@ struct BufferedImage : public ObjectCounter<BufferedImage>
 	union
 	{
 		SDL_Texture* sdlImage;
+        SDL_Surface* sdlSurface;
 		unsigned glHandle;
 	};
 };

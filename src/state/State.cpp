@@ -98,9 +98,13 @@ void MainMenuState::step_impl()
 {
 	IMGUI& imgui = getIMGUI();
 
+#ifndef MIYOO_MINI
 	imgui.doCursor();
+#endif
 	imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
+#ifndef MIYOO_MINI
 	imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
+#endif
 	imgui.doImage(GEN_ID, Vector2(400.0, 175.0), "gfx/titel.bmp");
 	if (imgui.doButton(GEN_ID, Vector2(34, 300.0), TextManager::MNU_LABEL_ONLINE))
 	{
@@ -159,7 +163,9 @@ CreditsState::CreditsState()
 void CreditsState::step_impl()
 {
 	IMGUI& imgui = getIMGUI();
+#ifndef MIYOO_MINI
 	imgui.doCursor();
+#endif  
 	imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
 	imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
 
