@@ -214,36 +214,50 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 
 	// Load ball shadow
 	tmpSurface = loadSurface("gfx/schball.bmp");
-	SDL_SetColorKey(tmpSurface, SDL_TRUE,
-			SDL_MapRGB(tmpSurface->format, 0, 0, 0));
+	if (!tmpSurface) {
+			DEBUG_STATUS("Unable to load ball shadow image.");
+			return;
+	}
 
+	SDL_SetColorKey(tmpSurface, SDL_TRUE, SDL_MapRGB(tmpSurface->format, 0, 0, 0));
 	SDL_SetSurfaceAlphaMod(tmpSurface, 127);
+
+#ifdef MIYOO_MINI
+	mBallShadowSurf = tmpSurface;
+#else
 	mBallShadow = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
 	SDL_FreeSurface(tmpSurface);
+#endif
 
 	// Load blobby and shadows surface
 	// Load streamed textures for coloring
 	for (int i = 1; i <= 5; ++i)
 	{
-		// Load blobby surface
 		char filename[64];
 		sprintf(filename, "gfx/blobbym%d.bmp", i);
 		SDL_Surface* blobImage = loadSurface(filename);
+		if (!blobImage) {
+				continue;
+		}
+
 		SDL_Surface* formattedBlobImage = SDL_ConvertSurfaceFormat(blobImage, SDL_PIXELFORMAT_ABGR8888, 0);
 		SDL_FreeSurface(blobImage);
 
-		SDL_SetColorKey(formattedBlobImage, SDL_TRUE,
-				SDL_MapRGB(formattedBlobImage->format, 0, 0, 0));
-		for(int j = 0; j < formattedBlobImage->w * formattedBlobImage->h; j++)
-		{
-			SDL_Color* pixel = &(((SDL_Color*)formattedBlobImage->pixels)[j]);
-			if (!(pixel->r | pixel->g | pixel->b))
-			{
-				pixel->a = 0;
-			}
+		SDL_SetColorKey(formattedBlobImage, SDL_TRUE, SDL_MapRGB(formattedBlobImage->format, 0, 0, 0));
+		for (int j = 0; j < formattedBlobImage->w * formattedBlobImage->h; ++j) {
+				SDL_Color* pixel = &(((SDL_Color*)formattedBlobImage->pixels)[j]);
+				if (!(pixel->r | pixel->g | pixel->b)) {
+						pixel->a = 0;
+				} 
 		}
 
-		mStandardBlob.push_back(formattedBlobImage);
+#ifdef MIYOO_MINI
+		mBlobSurfaces.push_back(formattedBlobImage);
+#else
+		SDL_Texture* blobTexture = SDL_CreateTextureFromSurface(mRenderer, formattedBlobImage);
+		SDL_FreeSurface(formattedBlobImage); 
+		mStandardBlob.push_back(blobTexture);
+#endif
 
 		// Load blobby shadow surface
 		sprintf(filename, "gfx/sch1%d.bmp", i);
@@ -400,6 +414,8 @@ RenderManagerSDL::~RenderManagerSDL()
 	for (auto& surface : mHighlightFontSurfaces) {
 		SDL_FreeSurface(surface);
 	}
+#else
+		SDL_DestroyTexture(mBallShadow);
 #endif
 
 	SDL_DestroyTexture(mOverlayTexture);
@@ -411,8 +427,6 @@ RenderManagerSDL::~RenderManagerSDL()
 
 	for(auto& i : mBall)
 		SDL_DestroyTexture(i);
-
-	SDL_DestroyTexture(mBallShadow);
 
 	for (unsigned int i = 0; i < mStandardBlob.size(); ++i)
 	{
@@ -761,8 +775,14 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 	if(mShowShadow)
 	{
 		// Ball Shadow
-		position = ballShadowRect(ballShadowPosition(gameState.getBallPosition()));
+		SDL_Rect position = ballShadowRect(ballShadowPosition(gameState.getBallPosition()));
+#ifdef MIYOO_MINI
+		if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
+		SDL_BlitSurface(mBallShadowSurf, nullptr, mMiyooSurface, &position);
+		if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
+#else
 		SDL_RenderCopy(mRenderer, mBallShadow, nullptr, &position);
+#endif
 
 		// Left blob shadow
 		position = blobShadowRect(blobShadowPosition(gameState.getBlobPosition(LEFT_PLAYER)));
@@ -804,11 +824,29 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 	colorizeBlobs(LEFT_PLAYER, leftFrame);
 	colorizeBlobs(RIGHT_PLAYER, rightFrame);
 
+#ifdef MIYOO_MINI
 	// Drawing left blob
 	position = blobRect(gameState.getBlobPosition(LEFT_PLAYER));
-	SDL_RenderCopy( mRenderer, mLeftBlob[leftFrame].mSDLsf, nullptr, &position);
+	srcRect = {0, 0, mBlobSurfaces[leftFrame]->w, mBlobSurfaces[leftFrame]->h};
+	SDL_Rect dstRect = {position.x, position.y, position.w, position.h};
+	if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
+	SDL_BlitSurface(mBlobSurfaces[leftFrame], &srcRect, mMiyooSurface, &dstRect);
+	if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
 
 	// Drawing right blob
 	position = blobRect(gameState.getBlobPosition(RIGHT_PLAYER));
+	srcRect = {0, 0, mBlobSurfaces[rightFrame]->w, mBlobSurfaces[rightFrame]->h};
+	dstRect = {position.x, position.y, position.w, position.h};
+	if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
+	SDL_BlitSurface(mBlobSurfaces[rightFrame], &srcRect, mMiyooSurface, &dstRect);
+	if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
+#else
+    // Drawing left blob
+	position = blobRect(gameState.getBlobPosition(LEFT_PLAYER));
+	SDL_RenderCopy( mRenderer, mLeftBlob[leftFrame].mSDLsf, nullptr, &position);
+    
+    // Drawing right blob
+	position = blobRect(gameState.getBlobPosition(RIGHT_PLAYER));
 	SDL_RenderCopy(mRenderer, mRightBlob[rightFrame].mSDLsf, nullptr, &position);
+#endif
 }
