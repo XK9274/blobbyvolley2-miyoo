@@ -256,12 +256,12 @@ void IMGUI::doOverlay(int id, const Vector2& pos1, const Vector2& pos2, const Co
 	mQueue->push(obj);
 }
 
-bool IMGUI::doButton(int id, const Vector2& position, TextManager::STRING text, unsigned int flags)
+bool IMGUI::doButton(int id, const Vector2& position, TextManager::STRING text, unsigned int flags, bool forceMenu)
 {
-	return doButton(id, position, getText(text), flags);
+	return doButton(id, position, getText(text), flags, forceMenu);
 }
 
-bool IMGUI::doButton(int id, const Vector2& position, const std::string& text, unsigned int flags)
+bool IMGUI::doButton(int id, const Vector2& position, const std::string& text, unsigned int flags, bool forceMenu)
 {
 	bool clicked = false;
 	QueueObject obj;
@@ -312,7 +312,21 @@ bool IMGUI::doButton(int id, const Vector2& position, const std::string& text, u
 			mActiveButton = id;
 
 		// React to keyboard input.
-		if (id == mActiveButton)
+		if(forceMenu)
+		{
+			obj.flags = obj.flags | TF_HIGHLIGHT;
+			switch (mLastKeyAction)
+			{
+				case KeyAction::SELECT:
+					clicked = true;
+					mActiveButton = 0;
+					mLastKeyAction = KeyAction::NONE;
+					break;
+				default:
+					break;
+			}
+		}
+		else if (id == mActiveButton)
 		{
 			obj.flags = obj.flags | TF_HIGHLIGHT;
 			switch (mLastKeyAction)
