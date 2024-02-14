@@ -65,8 +65,8 @@ class IMGUI : public ObjectCounter<IMGUI>
 		void doOverlay(int id, const Vector2& pos1, const Vector2& pos2, const Color& col = Color(0, 0, 0), float alpha = 0.65);
 		void doCursor(bool draw = true);
 
-		bool doButton(int id, const Vector2& position, const std::string& text, unsigned int flags = TF_NORMAL);
-		bool doButton(int id, const Vector2& position, TextManager::STRING text, unsigned int flags = TF_NORMAL);
+		bool doButton(int id, const Vector2& position, const std::string& text, unsigned int flags = TF_NORMAL, bool forceMenu = false);
+		bool doButton(int id, const Vector2& position, TextManager::STRING text, unsigned int flags = TF_NORMAL, bool forceMenu = false);
 
 		// draws an image that also works as a button
 		// for now, it is not included in keyboard navigation, so it is more like a clickable image than a real button
