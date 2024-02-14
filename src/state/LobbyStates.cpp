@@ -496,15 +496,7 @@ void LobbyGameSubstate::step( IMGUI& imgui, const ServerStatusData& status )
 	// open game button
 	if( mIsHost )
 	{
-		if( imgui.doButton(GEN_ID, Vector2(435, 395), imgui.getText(TextManager::NET_LEAVE) ) )
-		{
-			RakNet::BitStream stream;
-			stream.Write((unsigned char)ID_LOBBY);
-			stream.Write((unsigned char)LobbyPacketType::LEAVE_GAME);
-			mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
-		}
-
-		if( !no_players && (imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::MNU_LABEL_START) ) || doEnterGame) )
+		if( !no_players && (imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::MNU_LABEL_START), TF_NORMAL, true ) || doEnterGame) )
 		{
 			// Start Game
 			RakNet::BitStream stream;
@@ -517,12 +509,27 @@ void LobbyGameSubstate::step( IMGUI& imgui, const ServerStatusData& status )
 
 		if( no_players )
 		{
+			if( imgui.doButton(GEN_ID, Vector2(435, 395), imgui.getText(TextManager::NET_LEAVE), TF_NORMAL, true ) )
+			{
+				RakNet::BitStream stream;
+				stream.Write((unsigned char)ID_LOBBY);
+				stream.Write((unsigned char)LobbyPacketType::LEAVE_GAME);
+				mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
+			}
 			imgui.doText(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::GAME_WAITING));
+		} else {
+				if( imgui.doButton(GEN_ID, Vector2(435, 395), imgui.getText(TextManager::NET_LEAVE) ) )
+				{
+					RakNet::BitStream stream;
+					stream.Write((unsigned char)ID_LOBBY);
+					stream.Write((unsigned char)LobbyPacketType::LEAVE_GAME);
+					mClient->Send(&stream, LOW_PRIORITY, RELIABLE_ORDERED, 0);
+				}
 		}
 	}
 	else
 	{
-		if( imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::NET_LEAVE) ) )
+		if( imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::NET_LEAVE), TF_NORMAL, true ) )
 		{
 			RakNet::BitStream stream;
 			stream.Write((unsigned char)ID_LOBBY);
