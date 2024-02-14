@@ -288,7 +288,11 @@ bool IMGUI::doButton(int id, const Vector2& position, const std::string& text, u
 	if (!mInactive)
 	{
 		// M.W. : Activate cursorless object-highlighting once the up or down key is pressed.
-		if (mActiveButton == -1)
+#ifdef MIYOO_MINI
+        if (mActiveButton == -1 || mActiveButton == 13 || mActiveButton == 16)
+#else
+        if (mActiveButton == -1)
+#endif
 		{
 			switch (mLastKeyAction)
 			{
