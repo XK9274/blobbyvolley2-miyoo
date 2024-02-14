@@ -857,14 +857,6 @@ void RenderManagerSDL::refresh()
 
 void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
 {
-#ifdef MIYOO_MINI
-    if (SDL_MUSTLOCK(mMiyooSurface)) SDL_LockSurface(mMiyooSurface);
-	SDL_BlitSurface(mBackgroundSurface, NULL, mMiyooSurface, NULL);
-    if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
-#else
-	SDL_RenderCopy(mRenderer, mBackground, nullptr, nullptr);
-#endif
-
 	SDL_Rect position;
 
 #ifdef MIYOO_MINI
@@ -878,12 +870,12 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
     position.x = (int)lround(gameState.getBallPosition().x - 2.5);
     position.w = 5;
     position.h = 5;
-    SDL_BlitSurface(mMarkerSurface[(int)SDL_GetTicks() % 1000 >= 500], NULL, mMiyooSurface, &position);
+    // SDL_BlitSurface(mMarkerSurface[(int)SDL_GetTicks() % 1000 >= 500], NULL, mMiyooSurface, &position);
 
     // Mouse marker
     position.y = 590;
     position.x = (int)lround(mMouseMarkerPosition - 2.5);
-    SDL_BlitSurface(mMarkerSurface[(int)SDL_GetTicks() % 1000 >= 500], NULL, mMiyooSurface, &position);
+    // SDL_BlitSurface(mMarkerSurface[(int)SDL_GetTicks() % 1000 >= 500], NULL, mMiyooSurface, &position);
 
     if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
 #else
