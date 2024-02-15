@@ -2,6 +2,8 @@
 
 Ported to Miyoo Mini retro gaming devices by [@XK9274](https://github.com/XK9274) and [@Vitty85](https://github.com/Vitty85)
 
+Bundled with the Beach Mod by [@lordelan](https://github.com/lordelan)
+
 **The head-to-head multiplayer ball game**
 
 ### Website
