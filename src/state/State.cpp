@@ -98,7 +98,9 @@ void MainMenuState::step_impl()
 {
 	IMGUI& imgui = getIMGUI();
 
+#ifndef MIYOO_MINI
 	imgui.doCursor();
+#endif
 	imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
 	imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
 	imgui.doImage(GEN_ID, Vector2(400.0, 175.0), "gfx/titel.bmp");
@@ -160,7 +162,9 @@ void CreditsState::step_impl()
 {
     IMGUI& imgui = getIMGUI();
     
-    imgui.doCursor();
+#ifndef MIYOO_MINI
+	imgui.doCursor();
+#endif
     imgui.doImage(GEN_ID, Vector2(400.0, 300.0), "background");
     imgui.doOverlay(GEN_ID, Vector2(0.0, 0.0), Vector2(800.0, 600.0));
 

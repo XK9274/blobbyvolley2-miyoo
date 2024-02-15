@@ -117,7 +117,9 @@ void LocalGameState::step_impl()
 			std::make_tuple(TextManager::LBL_NO,  [&](){ mMatch->unpause(); }),
 			std::make_tuple(TextManager::RP_SAVE, [&](){ mSaveReplay = true; imgui.resetSelection(); }));
 
+#ifndef MIYOO_MINI
 		imgui.doCursor();
+#endif
 	}
 	else if (mWinner)
 	{

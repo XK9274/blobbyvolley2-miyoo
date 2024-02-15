@@ -100,7 +100,9 @@ void ReplayState::step_impl()
 
 	if(mMouseShowTimer > 0)
 	{
+#ifndef MIYOO_MINI
 		imgui.doCursor();
+#endif
 		mMouseShowTimer--;
 	}
 
@@ -221,7 +223,9 @@ void ReplayState::step_impl()
 			mPaused = false;
 			mPositionJump = 0;
 		}
+#ifndef MIYOO_MINI
 		imgui.doCursor();
+#endif
 	}
 
 	// show the game ui

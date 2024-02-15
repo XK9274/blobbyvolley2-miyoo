@@ -406,7 +406,9 @@ void NetworkGameState::step_impl()
 			mWaitingForReplay = false;
 			imgui.resetSelection();
 		}
+#ifndef MIYOO_MINI
 		imgui.doCursor();
+#endif
 	}
 	else switch (mNetworkState)
 	{
@@ -420,8 +422,9 @@ void NetworkGameState::step_impl()
 		}
 		case OPPONENT_DISCONNECTED:
 		{
+#ifndef MIYOO_MINI
 			imgui.doCursor();
-
+#endif
 			displayQueryPrompt(200,
 				TextManager::GAME_OPP_LEFT,
 				std::make_tuple(TextManager::LBL_OK, [&](){ switchState(new MainMenuState); }),
@@ -438,7 +441,9 @@ void NetworkGameState::step_impl()
 		}
 		case DISCONNECTED:
 		{
+#ifndef MIYOO_MINI
 			imgui.doCursor();
+#endif
 			imgui.doOverlay(GEN_ID, Vector2(100.0, 210.0),
 					Vector2(700.0, 370.0));
 			imgui.doText(GEN_ID, Vector2(120.0, 250.0),
@@ -457,7 +462,9 @@ void NetworkGameState::step_impl()
 		}
 		case SERVER_FULL:
 		{
+#ifndef MIYOO_MINI
 			imgui.doCursor();
+#endif
 			imgui.doOverlay(GEN_ID, Vector2(100.0, 210.0),Vector2(700.0, 370.0));
 			imgui.doText(GEN_ID, Vector2(200.0, 250.0),	TextManager::NET_SERVER_FULL);
 			if (imgui.doButton(GEN_ID, Vector2(350.0, 300.0), TextManager::LBL_OK))
@@ -537,7 +544,9 @@ void NetworkGameState::step_impl()
 					playSound(SoundManager::CHAT, ROUND_START_SOUND_VOLUME);
 				}
 			}
+#ifndef MIYOO_MINI
 			imgui.doCursor();
+#endif
 		}
 	}
 }

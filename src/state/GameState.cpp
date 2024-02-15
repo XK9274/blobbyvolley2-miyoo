@@ -151,8 +151,9 @@ void GameState::displayQueryPrompt(const int height, TextManager::STRING title, 
 bool GameState::displaySaveReplayPrompt()
 {
 	auto& imgui = getIMGUI();
-
+#ifndef MIYOO_MINI
 	imgui.doCursor();
+#endif
 
 	imgui.doOverlay(GEN_ID, Vector2(0, 200), Vector2(800, 400));
 	imgui.doText(GEN_ID, Vector2(400, 230), TextManager::RP_SAVE_NAME, TF_ALIGN_CENTER);
@@ -183,7 +184,9 @@ bool GameState::displayErrorMessageBox()
 {
 	auto& imgui = getIMGUI();
 
+#ifndef MIYOO_MINI
 	imgui.doCursor();
+#endif
 
 	imgui.doOverlay(GEN_ID, Vector2(100, 200), Vector2(700, 360));
 	size_t split = mErrorMessage.find(':');
@@ -208,7 +211,9 @@ bool GameState::displayWinningPlayerScreen(PlayerSide winner)
 	imgui.doImage(GEN_ID, Vector2(190, 250), "gfx/pokal.bmp");
 	imgui.doText(GEN_ID, Vector2(500, 210), tmp, TF_ALIGN_CENTER);
 	imgui.doText(GEN_ID, Vector2(500, 270), TextManager::GAME_WIN, TF_ALIGN_CENTER);
+#ifndef MIYOO_MINI
 	imgui.doCursor();
+#endif
 
 	return false;
 }
