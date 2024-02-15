@@ -34,8 +34,14 @@ struct DuelMatchState;
 // Text definitions
 static const int FONT_WIDTH_NORMAL 	=	24;	// Height and width of the normal font.
 static const int LINE_SPACER_NORMAL	=	 6;	// Extra space between 2 lines in a normal SelectBox.
+#ifdef MIYOO_MINI
+static const int FONT_WIDTH_SMALL	=	18;	// Height and width of the small font.
+static const int LINE_SPACER_SMALL	=	18;	// Extra space between 2 lines in a small SelectBox.
+#else
 static const int FONT_WIDTH_SMALL	=	12;	// Height and width of the small font.
 static const int LINE_SPACER_SMALL	=	 3;	// Extra space between 2 lines in a small SelectBox.
+
+#endif
 
 static const int FONT_INDEX_ASTERISK=	36; // M.W. : Currently a dot because there is no asterisk yet.
 

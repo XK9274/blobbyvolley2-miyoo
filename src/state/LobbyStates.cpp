@@ -496,7 +496,11 @@ void LobbyGameSubstate::step( IMGUI& imgui, const ServerStatusData& status )
 	// open game button
 	if( mIsHost )
 	{
+#ifdef MIYOO_MINI
+		if( !no_players && (imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::MNU_LABEL_START), TF_SMALL_FONT, true ) || doEnterGame) )
+#else
 		if( !no_players && (imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::MNU_LABEL_START), TF_NORMAL, true ) || doEnterGame) )
+#endif
 		{
 			// Start Game
 			RakNet::BitStream stream;
@@ -509,7 +513,11 @@ void LobbyGameSubstate::step( IMGUI& imgui, const ServerStatusData& status )
 
 		if( no_players )
 		{
+#ifdef MIYOO_MINI
+			if( imgui.doButton(GEN_ID, Vector2(435, 395), imgui.getText(TextManager::NET_LEAVE), TF_SMALL_FONT, true ) )
+#else
 			if( imgui.doButton(GEN_ID, Vector2(435, 395), imgui.getText(TextManager::NET_LEAVE), TF_NORMAL, true ) )
+#endif
 			{
 				RakNet::BitStream stream;
 				stream.Write((unsigned char)ID_LOBBY);
@@ -529,7 +537,11 @@ void LobbyGameSubstate::step( IMGUI& imgui, const ServerStatusData& status )
 	}
 	else
 	{
+#ifdef MIYOO_MINI
+		if( imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::NET_LEAVE), TF_SMALL_FONT, true ) )
+#else
 		if( imgui.doButton(GEN_ID, Vector2(435, 430), imgui.getText(TextManager::NET_LEAVE), TF_NORMAL, true ) )
+#endif
 		{
 			RakNet::BitStream stream;
 			stream.Write((unsigned char)ID_LOBBY);

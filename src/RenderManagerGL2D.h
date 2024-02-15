@@ -58,8 +58,11 @@ class RenderManagerGL2D : public RenderManager
 		bool setBackground(const std::string& filename) override;
 		void setBlobColor(int player, Color color) override;
 		void showShadow(bool shadow) override;
-
+#ifdef MIYOO_MINI
+		void drawText(const std::string& text, Vector2 position, unsigned int flags = TF_SMALL_FONT) override;
+#else
 		void drawText(const std::string& text, Vector2 position, unsigned int flags = TF_NORMAL) override;
+#endif
 		void drawImage(const std::string& filename, Vector2 position, Vector2 size) override;
 		void drawOverlay(float opacity, Vector2 pos1, Vector2 pos2, Color col) override;
 		void drawBlob(const Vector2& pos, const Color& col) override;
