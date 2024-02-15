@@ -1,4 +1,7 @@
-# Blobby Volley 2 ![build workflow](https://github.com/danielknobe/blobbyvolley2/actions/workflows/main.yaml/badge.svg)
+# Blobby Volley 2 [Miyoo Mini & Miyoo Mini Plus Edition] ![build workflow](https://github.com/danielknobe/blobbyvolley2/actions/workflows/main.yaml/badge.svg)
+
+Ported to Miyoo Mini retro gaming devices by [@XK9274](https://github.com/XK9274) and [@Vitty85](https://github.com/Vitty85)
+
 **The head-to-head multiplayer ball game**
 
 ### Website
