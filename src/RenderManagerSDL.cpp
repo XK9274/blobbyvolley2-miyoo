@@ -165,7 +165,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
 		SDL_SetSurfaceBlendMode(mMiyooSurface, SDL_BLENDMODE_BLEND);
 		SDL_FillRect(mMiyooSurface, NULL, SDL_MapRGBA(mMiyooSurface->format, 0, 0, 0, 0));
 	}
-	
+
 	mBackgroundSurface = SDL_CreateRGBSurface(0, xResolution, yResolution, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
 	if (!mBackgroundSurface) {
 		DEBUG_STATUS("Unable to create background surface.");
@@ -198,13 +198,7 @@ void RenderManagerSDL::init(int xResolution, int yResolution, bool fullscreen)
     // Create marker texture for mouse and ball
     tmpSurface = SDL_CreateRGBSurface(0, 5, 5, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
 
-#ifdef MIYOO_MINI
-    SDL_FillRect(tmpSurface, nullptr, SDL_MapRGB(tmpSurface->format, 255, 255, 255));
-    mMarkerSurface[0] = tmpSurface;
-
-    SDL_FillRect(tmpSurface, nullptr, SDL_MapRGB(tmpSurface->format, 0, 0, 0));
-    mMarkerSurface[1] = tmpSurface;
-#else
+#ifndef MIYOO_MINI
     SDL_FillRect(tmpSurface, nullptr, SDL_MapRGB(tmpSurface->format, 255, 255, 255));
     mMarker[0] = SDL_CreateTextureFromSurface(mRenderer, tmpSurface);
 
@@ -868,15 +862,21 @@ void RenderManagerSDL::drawGame(const DuelMatchState& gameState)
     // Ball marker
     position.y = 5;
     position.x = (int)lround(gameState.getBallPosition().x - 2.5);
-    position.w = 5;
-    position.h = 5;
-    // SDL_BlitSurface(mMarkerSurface[(int)SDL_GetTicks() % 1000 >= 500], NULL, mMiyooSurface, &position);
+    position.w = 10;
+    position.h = 10;
+    if((int)SDL_GetTicks() % 1000 >= 500)
+        SDL_FillRect(mMiyooSurface, &position, SDL_MapRGB(mMiyooSurface->format, 0x00, 0x00, 0x00));
+    else
+        SDL_FillRect(mMiyooSurface, &position, SDL_MapRGB(mMiyooSurface->format, 255, 255, 255));    
 
     // Mouse marker
     position.y = 590;
     position.x = (int)lround(mMouseMarkerPosition - 2.5);
-    // SDL_BlitSurface(mMarkerSurface[(int)SDL_GetTicks() % 1000 >= 500], NULL, mMiyooSurface, &position);
-
+    if((int)SDL_GetTicks() % 1000 >= 500)
+        SDL_FillRect(mMiyooSurface, &position, SDL_MapRGB(mMiyooSurface->format, 0x00, 0x00, 0x00));
+    else
+        SDL_FillRect(mMiyooSurface, &position, SDL_MapRGB(mMiyooSurface->format, 255, 255, 255));   
+    
     if (SDL_MUSTLOCK(mMiyooSurface)) SDL_UnlockSurface(mMiyooSurface);
 #else
     SDL_RenderCopy(mRenderer, mBackground, nullptr, nullptr);

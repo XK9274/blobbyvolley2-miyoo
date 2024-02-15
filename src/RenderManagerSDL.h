@@ -86,9 +86,8 @@ class RenderManagerSDL : public RenderManager
         std::vector<SDL_Surface*> mStandardBlobSurfaces;
         std::vector<SDL_Surface*> mStandardBlobShadowSurfaces;
         SDL_Surface* mStandardBlobBloodSurface;
-        SDL_Surface* mMarkerSurface[2];
         // Renderstreaming to push changes with UpdateTexture
-		SDL_Texture* mRenderStreaming = nullptr;
+	SDL_Texture* mRenderStreaming = nullptr;
 #else
         SDL_Texture* mBackground;
 		SDL_Texture* mMarker[2];
